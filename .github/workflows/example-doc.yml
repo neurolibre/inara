@@ -24,7 +24,7 @@ jobs:
           docker run \
               --volume "$(pwd):/data" \
               --user "$(id -u):$(id -g)" \
-              openjournals/inara:latest \
+              neurolibre/inara:latest \
               -o neurolibre example/paper.md
 
       - name: Upload PDF
