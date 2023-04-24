@@ -17,7 +17,7 @@ authors:
     equal-contrib: true
 affiliations:
   - index: 1
-    name: NeuroPoly
+    name: NeuroPoly Canada
   - index: 2
     name: Pandoc Development Team
   - index: 3
