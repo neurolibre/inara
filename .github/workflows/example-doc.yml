@@ -25,10 +25,10 @@ jobs:
               --volume "$(pwd):/data" \
               --user "$(id -u):$(id -g)" \
               openjournals/inara:latest \
-              -o jats,pdf example/paper.md
+              -o neurolibre example/paper.md
 
       - name: Upload PDF
         uses: actions/upload-artifact@v3
         with:
           name: paper
-          path: example/
+          path: example/paper.pdf
