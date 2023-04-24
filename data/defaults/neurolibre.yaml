@@ -16,6 +16,5 @@ variables:
   linkcolor: '[rgb]{0.0, 0.5, 1.0}'
   urlcolor: '[rgb]{0.0, 0.5, 1.0}'
 
-output:
-  pdf_document:
-    template: '${.}/../templates/neurolibre.latex'
+
+template: '${.}/../templates/neurolibre.latex'
