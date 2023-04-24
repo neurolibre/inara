@@ -2,7 +2,7 @@
 ARTICLE = paper.md
 # The Journal under which the article is to be published.
 # Currently either `joss` or `jose`.
-JOURNAL = joss
+JOURNAL = neurolibre
 
 # Path to OpenJournals resources like logos, csl style file, etc.
 OPENJOURNALS_PATH = resources

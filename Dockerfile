@@ -53,7 +53,7 @@ COPY ./data $openjournals_path/data
 COPY ./scripts/clean-metadata.lua $openjournals_path
 COPY ./scripts/entrypoint.sh /usr/local/bin/inara
 
-ENV JOURNAL=joss
+ENV JOURNAL=neurolibre
 ENV OPENJOURNALS_PATH=$openjournals_path
 
 # Input is read from `paper.md` by default, but can be overridden. Output is

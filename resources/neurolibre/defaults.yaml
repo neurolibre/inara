@@ -1,0 +1,31 @@
+csl: apa.csl
+
+template: NeuroLibre/latex.template
+
+metadata:
+  joss_resource_url: 'N/A'
+  journal:
+    abbrev-title: 'NeuroLibre'
+    alias: 'neurolibre'
+    url: 'https://neurolibre.org/'
+    doi: '10.55458/neurolibre'
+    title: 'NeuroLibre Reproducible Preprint Server'
+    publisher-name: 'NeuroLibre'
+    issn: '0000-0000'
+    eissn: '0000-0000'
+  
+  link-citations: true
+  
+  copyright:
+      statement: >-
+        Authors of papers retain copyright and release the work under a
+        Creative Commons Attribution 4.0 International License (CC BY 4.0)
+      holder: The article authors
+      year: 2022
+      type: open-access
+      link: https://creativecommons.org/licenses/by/4.0/
+      text: >-
+        Authors of papers retain copyright and release the work under a
+        Creative Commons Attribution 4.0 International License (CC BY 4.0)
+
+  logo_path: neurolibre/logo.png

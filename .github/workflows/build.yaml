@@ -33,7 +33,7 @@ jobs:
       - name: Push to Docker Hub
         if: >-
           github.event_name == 'push' &&
-          github.repository == 'openjournals/inara'
+          github.repository == 'neurolibre/inara'
         run: |
           # Log into registry
           echo "${{ secrets.DOCKER_HUB_TOKEN }}" |
@@ -43,7 +43,7 @@ jobs:
       - name: Push to GitHub Container Registry
         if: >-
           github.event_name == 'push' &&
-          github.repository == 'openjournals/inara'
+          github.repository == 'neurolibre/inara'
         run: |
           # Log into registry
           echo "${{ secrets.GITHUB_TOKEN }}" | \
