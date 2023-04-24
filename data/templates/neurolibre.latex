@@ -1,16 +1,66 @@
 \documentclass[10pt,a4paper,onecolumn]{article}
 \usepackage{marginnote}
 \usepackage{graphicx}
-\usepackage{xcolor}
+\usepackage[rgb]{xcolor}
 \usepackage{authblk,etoolbox}
 \usepackage{titlesec}
 \usepackage{calc}
 \usepackage{tikz}
-\usepackage{hyperref}
-\hypersetup{colorlinks,breaklinks=true,
-            urlcolor=[rgb]{0.0, 0.5, 1.0},
-            linkcolor=[rgb]{0.0, 0.5, 1.0}}
+\usepackage[pdfa]{hyperref}
+\usepackage{hyperxmp}
+\hypersetup{%
+    unicode=true,
+    pdfapart=3,
+    pdfaconformance=B,
+$if(title-meta)$
+    pdftitle={$title-meta$},
+$endif$
+$if(author-meta)$
+    pdfauthor={$author-meta$},
+$endif$
+$if(keywords)$
+    pdfkeywords={$for(keywords)$$keywords$$sep$; $endfor$},
+$endif$
+    pdfpublication={$journal.title$},
+    pdfpublisher={Open Journals},
+    pdfissn={$journal.issn$},
+    pdfpubtype={journal},
+    pdfvolumenum={$volume$},
+    pdfissuenum={$issue$},
+$if(article.doi)$
+    pdfdoi={$article.doi$},
+$endif$
+$if(author-meta)$
+    pdfcopyright={Copyright (c) $year$, $author-meta$},
+$endif$
+    pdflicenseurl={http://creativecommons.org/licenses/by/4.0/},
+$if(colorlinks)$
+    colorlinks=true,
+    linkcolor=$if(linkcolor)$$linkcolor$$else$Maroon$endif$,
+    citecolor=$if(citecolor)$$citecolor$$else$Blue$endif$,
+    urlcolor=$if(urlcolor)$$urlcolor$$else$Blue$endif$,
+$else$
+    pdfborder={0 0 0},
+$endif$
+    breaklinks=true
+}
+% https://tex.stackexchange.com/a/535849
+% Create an OutputIntent in order to correctly specify colours
+\immediate\pdfobj stream attr{/N 3} file{sRGB.icc}
+\pdfcatalog{%
+  /OutputIntents [
+    <<
+      /Type /OutputIntent
+      /S /GTS_PDFA1
+      /DestOutputProfile \the\pdflastobj\space 0 R
+      /OutputConditionIdentifier (sRGB)
+      /Info (sRGB)
+    >>
+  ]
+}
+\pdfvariable omitcidset=1
 \usepackage{caption}
+\usepackage{orcidlink}
 \usepackage{tcolorbox}
 \usepackage{amssymb,amsmath}
 \usepackage{ifxetex,ifluatex}
@@ -26,61 +76,14 @@
     \endorigfigure
 }
 
-$if(draft)$
-\usepackage{lineno}
-\linenumbers
-\usepackage{draftwatermark}
-$endif$
-
 \usepackage{fixltx2e} % provides \textsubscript
-\usepackage[
-  backend=biber,
-%  style=alphabetic,
-%  citestyle=numeric
-]{biblatex}
-\bibliography{$bibliography$}
-
-% --- Splitting \texttt --------------------------------------------------
-
-\let\textttOrig=\texttt
-\def\texttt#1{\expandafter\textttOrig{\seqsplit{#1}}}
-\renewcommand{\seqinsert}{\ifmmode
-  \allowbreak
-  \else\penalty6000\hspace{0pt plus 0.02em}\fi}
-
-
-% --- Pandoc does not distinguish between links like [foo](bar) and
-% --- [foo](foo) -- a simplistic Markdown model.  However, this is
-% --- wrong:  in links like [foo](foo) the text is the url, and must
-% --- be split correspondingly.
-% --- Here we detect links \href{foo}{foo}, and also links starting
-% --- with https://doi.org, and use path-like splitting (but not
-% --- escaping!) with these links.
-% --- Another vile thing pandoc does is the different escaping of
-% --- foo and bar.  This may confound our detection.
-% --- This problem we do not try to solve at present, with the exception
-% --- of doi-like urls, which we detect correctly.
-
-
-\makeatletter
-\let\href@Orig=\href
-\def\href@Urllike#1#2{\href@Orig{#1}{\begingroup
-    \def\Url@String{#2}\Url@FormatString
-    \endgroup}}
-\def\href@Notdoi#1#2{\def\tempa{#1}\def\tempb{#2}%
-  \ifx\tempa\tempb\relax\href@Urllike{#1}{#2}\else
-  \href@Orig{#1}{#2}\fi}
-\def\href#1#2{%
-  \IfBeginWith{#1}{https://doi.org}%
-  {\href@Urllike{#1}{#2}}{\href@Notdoi{#1}{#2}}}
-\makeatother
 
 $if(csl-refs)$
 \newlength{\cslhangindent}
 \setlength{\cslhangindent}{1.5em}
 \newlength{\csllabelwidth}
 \setlength{\csllabelwidth}{3em}
-\newenvironment{CSLReferences}[3] % #1 hanging-ident, #2 entry spacing
+\newenvironment{CSLReferences}[2] % #1 hanging-ident, #2 entry spacing
  {% don't indent paragraphs
   \setlength{\parindent}{0pt}
   % turn on hanging indent if param 1 is 1
@@ -91,10 +94,10 @@ $if(csl-refs)$
   \fi
  }%
  {}
-\usepackage{calc} % for \widthof, \maxof
+\usepackage{calc}
 \newcommand{\CSLBlock}[1]{#1\hfill\break}
-\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\maxof{\widthof{#1}}{\csllabelwidth}}{#1}}
-\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth}{#1}}
+\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{#1}}
+\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{#1}\break}
 \newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
 $endif$
 
@@ -103,12 +106,11 @@ $endif$
             headheight=2.2cm, reversemp, includemp, marginparwidth=4.5cm]{geometry}
 
 % --- Default font ------------------------------------------------------------
-\usepackage[scaled]{helvet}
-\renewcommand\familydefault{\sfdefault} 
-\usepackage[T1]{fontenc}
+$if(joss)$
+\renewcommand\familydefault{\sfdefault}
+$endif$
 
 % --- Style -------------------------------------------------------------------
-\renewcommand{\bibfont}{\small \sffamily}
 \renewcommand{\captionfont}{\small\sffamily}
 \renewcommand{\captionlabelfont}{\bfseries}
 
@@ -137,7 +139,7 @@ $endif$
 \fancyhead[R]{}
 \renewcommand{\footrulewidth}{0.25pt}
 
-\fancyfoot[L]{\parbox[t]{0.98\headwidth}{\footnotesize{\sffamily $citation_author$, ($year$). $title$. \textit{$journal_name$}, $volume$($issue$), $page$. \url{https://doi.org/$formatted_doi$}}}}
+\fancyfoot[L]{\parbox[t]{0.98\headwidth}{\footnotesize{\sffamily $self-citation$}.}}
 
 
 \fancyfoot[R]{\sffamily \thepage}
@@ -187,7 +189,6 @@ $endif$
     {\begin{flushleft}}
     {\end{flushleft}}
   \AB@maketitle}}
-\makeatletter
 \renewcommand\AB@affilsepx{ \protect\Affilfont}
 %\renewcommand\AB@affilnote[1]{{\bfseries #1}\hspace{2pt}}
 \renewcommand\AB@affilnote[1]{{\bfseries #1}\hspace{3pt}}
@@ -197,7 +198,6 @@ $endif$
         \setcounter{Maxaffil}{0}\fi
         \begingroup
         \let\href=\href@Orig
-        \let\texttt=\textttOrig
         \let\protect\@unexpandable@protect
         \def\thanks{\protect\thanks}\def\footnote{\protect\footnote}%
         \@temptokena=\expandafter{\AB@authors}%
@@ -230,7 +230,9 @@ $endif$
   \else
     \usepackage{fontspec}
   \fi
-  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\sffamily]{Ligatures=TeX}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
 
 \fi
 % use upquote if available, for straight quotes in verbatim environments
@@ -241,43 +243,29 @@ $endif$
 \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
 }{}
 
-\usepackage{hyperref}
+%% Font settings
+\usepackage{fontsetup} % Lazy way to get proper Greek lowercase glyphs
+
+% Use Hack https://sourcefoundry.org/hack/
+\setmonofont{Hack}
+
 $if(colorlinks)$
 \PassOptionsToPackage{usenames,dvipsnames}{color} % color is loaded by hyperref
 $endif$
-\hypersetup{unicode=true,
-$if(title-meta)$
-            pdftitle={$title-meta$},
-$endif$
-$if(author-meta)$
-            pdfauthor={$author-meta$},
-$endif$
-$if(keywords)$
-            pdfkeywords={$for(keywords)$$keywords$$sep$; $endfor$},
-$endif$
-$if(colorlinks)$
-            colorlinks=true,
-            linkcolor=$if(linkcolor)$$linkcolor$$else$Maroon$endif$,
-            citecolor=$if(citecolor)$$citecolor$$else$Blue$endif$,
-            urlcolor=$if(urlcolor)$$urlcolor$$else$Blue$endif$,
-$else$
-            pdfborder={0 0 0},
-$endif$
-            breaklinks=true}
 \urlstyle{same}  % don't use monospace font for urls
 $if(lang)$
-\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
-  \usepackage[shorthands=off,$for(babel-otherlangs)$$babel-otherlangs$,$endfor$main=$babel-lang$]{babel}
-$if(babel-newcommands)$
-  $babel-newcommands$
-$endif$
+\ifLuaTeX
+\usepackage[bidi=basic]{babel}
 \else
-  \usepackage{polyglossia}
-  \setmainlanguage[$polyglossia-lang.options$]{$polyglossia-lang.name$}
-$for(polyglossia-otherlangs)$
-  \setotherlanguage[$polyglossia-otherlangs.options$]{$polyglossia-otherlangs.name$}
-$endfor$
+\usepackage[bidi=default]{babel}
 \fi
+\babelprovide[main,import]{$babel-lang$}
+$for(babel-otherlangs)$
+\babelprovide[import]{$babel-otherlangs$}
+$endfor$
+% get rid of language-specific shorthands (see #6817):
+\let\LanguageShortHands\languageshorthands
+\def\languageshorthands#1{}
 $endif$
 $if(natbib)$
 \usepackage{natbib}
@@ -304,21 +292,14 @@ $if(verbatim-in-note)$
 \VerbatimFootnotes % allows verbatim text in footnotes
 $endif$
 $if(tables)$
-\usepackage{longtable,booktabs}
+\usepackage{longtable,booktabs,array}
 $endif$
-
-% --- We redefined \texttt, but in sections and captions we want the
-% --- old definition
-\let\addcontentslineOrig=\addcontentsline
-\def\addcontentsline#1#2#3{\bgroup
-  \let\texttt=\textttOrig\addcontentslineOrig{#1}{#2}{#3}\egroup}
-\let\markbothOrig\markboth
-\def\markboth#1#2{\bgroup
-  \let\texttt=\textttOrig\markbothOrig{#1}{#2}\egroup}
-\let\markrightOrig\markright
-\def\markright#1{\bgroup
-  \let\texttt=\textttOrig\markrightOrig{#1}\egroup}
-
+$-- add watermark and linenumbers unless this is the final (non-draft) version
+$if(draft)$
+\usepackage{lineno}
+\linenumbers
+\usepackage{draftwatermark}
+$endif$
 
 $if(graphics)$
 \usepackage{graphicx,grffile}
@@ -348,6 +329,10 @@ $else$
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{6pt plus 2pt minus 1pt}
 }
+$endif$
+$if(strikeout)$
+$-- also used for underline
+\usepackage{soul}
 $endif$
 \setlength{\emergencystretch}{3em}  % prevent overfull lines
 \providecommand{\tightlist}{%
@@ -389,6 +374,9 @@ $endif$
 $for(header-includes)$
 $header-includes$
 $endfor$
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
 
 $if(title)$
 \title{$title$$if(thanks)$\thanks{$thanks$}$endif$}
@@ -398,22 +386,29 @@ $if(subtitle)$
 \subtitle{$subtitle$}
 $endif$
 
-$if(authors)$
-  $for(authors)$
-  $if(authors.affiliation)$
-    \author[$authors.affiliation$]{$authors.name$}
-  $else$
-    \author{$authors.name$}
-  $endif$
-  $endfor$
+$for(authors)$
+\author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$%
+$if(authors.equal-contrib)$*$endif$%
+$if(authors.cor-id)$\ensuremath\mathparagraph$endif$]{$authors.name$%
+$if(it.orcid)$
+  \,\orcidlink{${it.orcid}}\,%
 $endif$
+$if(it.note)$
+  \thanks{$it.note$}%
+$endif$
+}
+$endfor$
 
-$if(affiliations)$
-  $for(affiliations)$
-    \affil[$affiliations.index$]{$affiliations.name$}
-  $endfor$
+$for(affiliations)$
+\affil[$affiliations.index$]{$affiliations.name$}
+$endfor$
+$if(article.author-notes.corresp)$
+\affil[$$\mathparagraph$$]{Corresponding author}
 $endif$
-\date{\vspace{-7ex}}
+$if(article.has-equal-contributors)$
+\affil[*]{$if(message.equal-contrib)$$message.equal-contrib$$else$These authors contributed equally.$endif$}
+$endif$
+\date{\vspace{-2.5ex}}
 
 \begin{document}
 $if(title)$
@@ -433,9 +428,9 @@ $endif$
 
   \vspace{-4.5cm}
 
-  {\bfseries DOI:} \href{https://doi.org/$formatted_doi$}{\color{red}{$formatted_doi$}}
+  {\bfseries DOI:} \href{https://doi.org/$article.doi$}{\color{red}{$article.doi$}}
 
-  \vspace{2mm}
+   \vspace{2mm}
 
     {\bfseries Reproducible Preprint}
   \begin{itemize}
@@ -444,7 +439,7 @@ $endif$
   \end{itemize}
 
   \vspace{2mm}
-
+  
   {\bfseries Code}
   \begin{itemize}
     \setlength\itemsep{0em}
@@ -452,9 +447,9 @@ $endif$
     \item \href{$repository$}{\color{red}{Submitted Repository}} \ExternalLink
   \end{itemize}
 
-  \vspace{2mm}
+   \vspace{2mm}
 
-  {\bfseries Archives}
+    {\bfseries Reproducibility Assets}
   \begin{itemize}
     \setlength\itemsep{0em}
     \item \href{$repository_doi$}{\color{red}{Repository}} \ExternalLink
@@ -487,7 +482,7 @@ $endif$
 
   \vspace{2mm}
   {\bfseries License}\\
-  Authors of papers retain copyright and release the work under a Creative Commons Attribution 4.0 International License (\href{http://creativecommons.org/licenses/by/4.0/}{\color{red}{CC BY 4.0}}).
+  Authors of papers retain copyright and release the work under a Creative Commons Attribution 4.0 International License (\href{https://creativecommons.org/licenses/by/4.0/}{\color{red}{CC BY 4.0}}).
 
   $if(aas-doi)$
   \vspace{4mm}
@@ -497,6 +492,16 @@ $endif$
   \vspace{2mm}
   \newline
   This article and software are linked with research article DOI \href{https://doi.org/$aas-doi$}{\color{linky}{$aas-doi$}}, published in the $aas-journal$.
+  $endif$
+
+  $if(europar-doi)$
+  \vspace{4mm}
+  {\bfseries In partnership with}\\
+  \vspace{2mm}
+  \includegraphics[width=4cm]{$europar_logo_path$}
+  \vspace{2mm}
+  \newline
+  JOSS Special Issue for Euro-Par 2022 Artefacts \href{https://doi.org/$europar-doi$}{\color{linky}{$europar-doi$}}
   $endif$
 
   \end{flushleft}
