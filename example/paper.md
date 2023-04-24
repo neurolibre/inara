@@ -1,6 +1,6 @@
 ---
 title: >-
-    NeuroLibre sprint: One out of a thousand things of a PDF
+    Neurolibre is more than a PDF, but this is essential
 authors:
   - name: Agah Karakuzu
     email: myemail@neurolibre.org
