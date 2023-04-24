@@ -3,7 +3,7 @@ title: >-
     Article Writing with Markdown and the NeuroLibre publishing pipeline
 authors:
   - name: Agah Karakuzu
-    email: albert@zeitkraut.de
+    email: myemail@gmail.com
     affiliation: [1, 2]
     orcid: 0000-0002-9455-0796
     corresponding: true
