@@ -2,7 +2,7 @@
 title: >-
     Article Writing with Markdown and the NeuroLibre publishing pipeline
 authors:
-  - name: Albert Krewinkel
+  - name: Agah Karakuzu
     email: albert@zeitkraut.de
     affiliation: [1, 2]
     orcid: 0000-0002-9455-0796
