@@ -426,7 +426,7 @@ $endif$
   %\hrule
   \sffamily\small
 
-  \vspace{-4.5cm}
+  \vspace{-3.5cm}
 
   {\bfseries DOI:} \href{https://doi.org/$article.doi$}{\color{red}{$article.doi$}}
 
