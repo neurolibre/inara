@@ -1,6 +1,6 @@
 ---
 title: >-
-    Article Writing with Markdown and the Open Journals publishing pipeline
+    Article Writing with Markdown and the NeuroLibre publishing pipeline
 authors:
   - name: Albert Krewinkel
     email: albert@zeitkraut.de
