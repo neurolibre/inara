@@ -1,5 +1,10 @@
 metadata:
   archive_doi: 'DOI unavailable'
+  repository_doi: 'DOI unavailable'
+  data_doi: 'DOI unavailable'
+  book_doi: 'DOI unavailable'
+  docker_doi: 'DOI unavailable'
+  book_exec_url: 'URL unavailable'
   editor_url: 'https://example.com'
   repository: 'NO_REPOSITORY'
   review_issue_url: 'N/A'
