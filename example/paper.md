@@ -1,6 +1,6 @@
 ---
 title: >-
-    Article Writing with Markdown and the NeuroLibre publishing pipeline
+    NeuroLibre sprint: One out of a thousand things of a PDF
 authors:
   - name: Agah Karakuzu
     email: myemail@neurolibre.org
