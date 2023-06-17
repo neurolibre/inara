@@ -8,4 +8,4 @@ filters:
   - type: lua
     path: flatten-references.lua
 
-template: '${.}/../templates/default.crossref'
+template: '${.}/../templates/neurolibre.crossref'
