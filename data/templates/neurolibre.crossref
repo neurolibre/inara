@@ -15,11 +15,8 @@
     <registrant>Centre de Recherche de l'Institut Universitaire de Geriatrie de Montreal</registrant>
   </head>
   <body>
-  <posted_content>
+  <posted_content type="preprint">
   <group_title>NeuroLibre Reproducible Preprint</group_title>
-        <titles>
-          <title>$title-meta$</title>
-        </titles>
         <contributors>
 $for(authors/first)$
           <person_name sequence="first" contributor_role="author">
@@ -51,14 +48,14 @@ $endif$
           </person_name>
 $endfor$
         </contributors>
+        <titles>
+          <title>$title-meta$</title>
+        </titles>
         <posted_date>
           <month>$month$</month>
           <day>$day$</day>
           <year>$year$</year>
         </posted_date>
-        <publisher_item>
-          <identifier id_type="doi">$article.doi$</identifier>
-        </publisher_item>
         <ai:program name="AccessIndicators">
           <ai:license_ref applies_to="vor">http://creativecommons.org/licenses/by/4.0/</ai:license_ref>
           <ai:license_ref applies_to="am">http://creativecommons.org/licenses/by/4.0/</ai:license_ref>
