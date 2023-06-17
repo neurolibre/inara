@@ -443,8 +443,8 @@ $endif$
   {\bfseries Code}
   \begin{itemize}
     \setlength\itemsep{0em}
-    \item \href{$review_issue_url$}{\color{red}{Technical Screening}} \ExternalLink
-    \item \href{$repository$}{\color{red}{Submitted Repository}} \ExternalLink
+    \item \href{$software_review_url$}{\color{red}{Technical Screening}} \ExternalLink
+    \item \href{$software_repository_url$}{\color{red}{Submitted Repository}} \ExternalLink
   \end{itemize}
 
    \vspace{2mm}
@@ -452,10 +452,10 @@ $endif$
     {\bfseries Reproducibility Assets}
   \begin{itemize}
     \setlength\itemsep{0em}
-    \item \href{$repository_doi$}{\color{red}{Repository}} \ExternalLink
-    \item \href{$data_doi$}{\color{red}{Dataset}} \ExternalLink
-    \item \href{$book_doi$}{\color{red}{Jupyter Book}} \ExternalLink
-    \item \href{$docker_doi$}{\color{red}{Container}} \ExternalLink
+    \item \href{https://doi.org/$repository_doi$}{\color{red}{Repository}} \ExternalLink
+    \item \href{https://doi.org/$data_doi$}{\color{red}{Dataset}} \ExternalLink
+    \item \href{https://doi.org/$book_doi$}{\color{red}{Jupyter Book}} \ExternalLink
+    \item \href{https://doi.org/$docker_doi$}{\color{red}{Container}} \ExternalLink
   \end{itemize}
 
   \vspace{1mm}
