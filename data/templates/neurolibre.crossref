@@ -16,7 +16,7 @@
   </head>
   <body>
   <posted_content type="preprint">
-  <group_title>NeuroLibre Reproducible Preprint</group_title>
+  <group_title>NeuroLibre Reproducible Preprints</group_title>
         <contributors>
 $for(authors/first)$
           <person_name sequence="first" contributor_role="author">
