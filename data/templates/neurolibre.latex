@@ -464,10 +464,11 @@ $endif$
 
   \vspace{2mm}
 
-  {\bfseries Editor:} \href{$editor_url$}{\color{red}$editor_name$} \ExternalLink \\
+  {\bfseries Moderator:} \href{$editor.url$}{$editor.name$} \ExternalLink
+  $if(editor.orcid)$\,\orcidlink{${editor.orcid}}$endif$ \\
   \vspace{1mm}
   $if(reviewers)$
-  {\bfseries Reviewer(s):}
+  {\bfseries Screener(s):}
   \begin{itemize}
   \setlength\itemsep{0em}
   $for(reviewers)$
