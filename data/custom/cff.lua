@@ -36,17 +36,17 @@ local function preferred_citation(meta)
     ['authors'] = filter_authors(meta.author),
     ['date-published'] = os.date('%Y-%m-%d', os.time(meta.published_parts)),
     ['doi'] = article.doi,
-    ['isbn'] = journal.isbn,
-    ['issn'] = journal.eissn or journal.issn,
-    ['issue'] = article.issue,
+    -- ['isbn'] = journal.isbn,
+    -- ['issn'] = journal.eissn or journal.issn,
+    -- ['issue'] = article.issue,
     ['journal'] = journal.title,
     ['keywords'] = meta.tag,
     ['publisher'] = {name = journal['publisher-name']},
-    ['start'] = article.fpage,
+    -- ['start'] = article.fpage,
     ['title'] = stringify(meta.title),
-    ['type'] = 'article',
+    ['type'] = 'preprint',
     ['url'] = ('https://joss.theoj.org/papers/%s'):format(stringify(article.doi)),
-    ['volume'] = article.volume,
+    -- ['volume'] = article.volume,
   }
 end
 
@@ -56,8 +56,8 @@ local function citation_from_meta (meta)
     ['contact'] = contact(meta.author),
     ['doi'] = meta.archive_doi,
     ['message'] = meta.message or
-      ("If you use this software, please cite our " ..
-       "article in the Journal of Open Source Software."),
+      ("To reference this work, please cite our " ..
+       "reproducible preprint in NeuroLibre."),
     ['preferred-citation'] = preferred_citation(meta),
     ['title'] = meta.title,
   }
