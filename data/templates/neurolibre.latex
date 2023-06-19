@@ -465,7 +465,6 @@ $endif$
   \vspace{2mm}
 
   {\bfseries Moderator:} \href{$editor.url$}{$editor.name$} \ExternalLink
-  $if(editor.orcid)$\,\orcidlink{${editor.orcid}}$endif$ \\
   \vspace{1mm}
   $if(reviewers)$
   {\bfseries Screener(s):}
