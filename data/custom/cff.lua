@@ -45,7 +45,7 @@ local function preferred_citation(meta)
     -- ['start'] = article.fpage,
     ['title'] = stringify(meta.title),
     ['type'] = 'preprint',
-    ['url'] = ('https://joss.theoj.org/papers/%s'):format(stringify(article.doi)),
+    ['url'] = ('https://neurolibre.org/papers/%s'):format(stringify(article.doi)),
     -- ['volume'] = article.volume,
   }
 end
