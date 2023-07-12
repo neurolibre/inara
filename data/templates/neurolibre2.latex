@@ -198,6 +198,7 @@ $endif$
         \setcounter{Maxaffil}{0}\fi
         \begingroup
         \let\href=\href@Orig
+        \let\heightof=\pgfmath@calc@heightof
         \let\protect\@unexpandable@protect
         \def\thanks{\protect\thanks}\def\footnote{\protect\footnote}%
         \@temptokena=\expandafter{\AB@authors}%
