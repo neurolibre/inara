@@ -11,7 +11,7 @@ function Meta (meta)
   end
 end
 
-function CountAuthors(elem)
+local function CountAuthors(elem)
   if elem.t == 'MetaList' and elem[1].t == 'MetaInlines' then
     local count = #elem
     return pandoc.MetaList({pandoc.MetaInlines(pandoc.SmallCaps({pandoc.Str(tostring(count))}))})
