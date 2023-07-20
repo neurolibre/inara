@@ -388,6 +388,55 @@ $endif$
 
 The paper has $author_number$ authors.
 
+% \newcounter{authorcounter}
+% \setcounter{authorcounter}{1}
+
+% \ifnum\value{author_number} < 11 {
+
+% $for(authors)$
+% \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$%
+% $if(authors.equal-contrib)$*$endif$%
+% $if(authors.cor-id)$\ensuremath\mathparagraph$endif$]{$authors.name$%
+% $if(it.orcid)$
+%   \,\orcidlink{${it.orcid}}\,
+% $endif$
+% $if(it.note)$
+%   \thanks{$it.note$}%
+% $endif$}
+% $endfor$
+
+% }{%else
+
+% $for(authors)$
+% \ifnum\value{authorcounter}<11
+%     \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$%
+%     $if(authors.equal-contrib)$*$endif$%
+%     $if(authors.cor-id)$\ensuremath\mathparagraph$endif$]{$authors.name$%
+%     $if(authors.orcid)$
+%       \,\orcidlink{${it.orcid}}\,%
+%     $endif$
+%     $if(authors.note)$
+%       \thanks{$it.note$}%
+%     $endif$
+%     }%
+% \else
+%     \ifnum\value{authorcounter}=\author_number
+%         \author{... et al.}
+%     \fi
+% \fi
+% \stepcounter{authorcounter}
+
+% }%
+
+$for(affiliations)$
+\affil[$affiliations.index$]{$affiliations.name$}
+$endfor$
+$if(article.author-notes.corresp)$
+\affil[$$\mathparagraph$$]{Corresponding author}
+$endif$
+$if(article.has-equal-contributors)$
+\affil[*]{$if(message.equal-contrib)$$message.equal-contrib$$else$These authors contributed equally.$endif$}
+$endif$
 \date{\vspace{-2.5ex}}
 
 \begin{document}
