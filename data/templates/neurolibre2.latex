@@ -177,7 +177,6 @@ $endif$
        }
    }
 
-
 % --- Title / Authors ---------------------------------------------------------
 % patch \maketitle so that it doesn't center
 \patchcmd{\@maketitle}{center}{flushleft}{}{}
@@ -213,48 +212,11 @@ $endif$
       \endgroup
        \let\AB@affilsep\AB@affilsepx
 }
-
-\makeatletter
-\newcount\authorcount
-\renewcommand\maketitle{%
-  \authorcount=0
-  \renewcommand\and{%
-    \ifnum\authorcount<9%
-      \advance\authorcount by 1%
-      \ifnum\authorcount>1, \fi%
-    \else%
-      \ifnum\authorcount=9, and\fi%
-      \ifnum\authorcount>9, \fi%
-    \fi%
-  }%
-  \author%
-  \authorcount=0
-  \renewcommand\and{%
-    \ifnum\authorcount=0\relax\else%
-      \advance\authorcount by 1%
-      \ifnum\authorcount=11, et al.\fi%
-      \ifnum\authorcount>10, \fi%
-    \fi%
-  }%
-}
-
-\newcommand{\printremainingauthors}{%
-  \authorcount=0
-  \renewcommand\and{%
-    \ifnum\authorcount>10%
-      \advance\authorcount by 1%
-      \ifnum\authorcount=11, et al.\fi%
-      \ifnum\authorcount>11, \fi%
-    \fi%
-  }%
-  \author%
-}
-
 \makeatother
-
 \renewcommand\Authfont{\sffamily\bfseries}
 \renewcommand\Affilfont{\sffamily\small\mdseries}
 \setlength{\affilsep}{1em}
+
 
 \ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
   \usepackage[$if(fontenc)$$fontenc$$else$T1$endif$]{fontenc}
@@ -424,17 +386,46 @@ $if(subtitle)$
 \subtitle{$subtitle$}
 $endif$
 
+\newcounter{authorcount}
+\setcounter{authorcount}{0}
+
 $for(authors)$
-\author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$%
-$if(authors.equal-contrib)$*$endif$%
-$if(authors.cor-id)$\ensuremath\mathparagraph$endif$]{$authors.name$%
-$if(it.orcid)$
-  \,\orcidlink{${it.orcid}}\,%
-$endif$
-$if(it.note)$
-  \thanks{$it.note$}%
-$endif$
-}
+  % Increment the author count for each iteration
+  \stepcounter{authorcount}
+
+  % Only display the first 10 authors and the last author
+  $if(authors.equal-contrib)$
+    % Display the asterisk for equal-contrib authors
+    $if(it.orcid)$
+      \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$]{$authors.name$\thanks{$it.note$}*\,\orcidlink{${it.orcid}}\,}
+    $else$
+      \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$]{$authors.name$\thanks{$it.note$}*}
+    $endif$
+  $else$
+    \ifnumcomp{\value{authorcount}}{<}{11}{ % Display the first 10 authors
+      $if(it.orcid)$
+        \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$]{$authors.name$\thanks{$it.note$}\,\orcidlink{${it.orcid}}\,}
+      $else$
+        \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$]{$authors.name$\thanks{$it.note$}}
+      $endif$
+    }{
+      $if(authors.cor-id)$
+        % Display the last author with the special cor-id symbol
+        \ifnumcomp{\value{authorcount}}{=}{$len(authors)$}{
+          \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$]{\ensuremath\mathparagraph$authors.name$}
+        }{}
+      $else$
+        % Display the last author without special symbols
+        \ifnumcomp{\value{authorcount}}{=}{$len(authors)$}{
+          $if(it.orcid)$
+            \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$]{$authors.name$\thanks{$it.note$}\,\orcidlink{${it.orcid}}\,}
+          $else$
+            \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$]{$authors.name$\thanks{$it.note$}}
+          $endif$
+        }{}
+      $endif$
+    }
+  $endif$
 $endfor$
 
 $for(affiliations)$
@@ -565,8 +556,6 @@ $if(lof)$
 \listoffigures
 $endif$
 $body$
-
-\printremainingauthors
 
 $if(natbib)$
 $if(bibliography)$
