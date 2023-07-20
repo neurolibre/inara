@@ -387,7 +387,7 @@ $if(subtitle)$
 $endif$
 
 $for(authors)$
-\ifnumless{\author_number$}{11}{%
+\ifnumless{\author_number}{11}{%
     % Display all authors if there are 10 or fewer
     \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$%
     $if(authors.equal-contrib)$*$endif$%
