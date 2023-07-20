@@ -386,36 +386,34 @@ $if(subtitle)$
 \subtitle{$subtitle$}
 $endif$
 
+
+\ifnumless{$author_number$}{11}{
+
 $for(authors)$
-\ifnumless{\author_number}{11}{%
-    % Display all authors if there are 10 or fewer
-    \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$%
-    $if(authors.equal-contrib)$*$endif$%
-    $if(authors.cor-id)$\ensuremath\mathparagraph$endif$]{$authors.name$%
-    $if(authors.orcid)$
-      \,\orcidlink{${it.orcid}}\,%
-    $endif$
-    $if(authors.note)$
-      \thanks{$it.note$}%
-    $endif$
-    }%
-}{%
-    % If there are more than 10 authors, display the first 10 and the last author with "et al."
-    $for(authors[0:9])$
-    \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$%
-    $if(authors.equal-contrib)$*$endif$%
-    $if(authors.cor-id)$\ensuremath\mathparagraph$endif$]{$authors.name$%
-    $if(authors.orcid)$
-      \,\orcidlink{${it.orcid}}\,%
-    $endif$
-    $if(authors.note)$
-      \thanks{$it.note$}%
-    $endif$
-    }%
-    $endfor$
-    \author[...]{... et al.}
-}%
+\author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$%
+$if(authors.equal-contrib)$*$endif$%
+$if(authors.cor-id)$\ensuremath\mathparagraph$endif$]{$authors.name$%
+$if(it.orcid)$
+  \,\orcidlink{${it.orcid}}\,
+$endif$
+$if(it.note)$
+  \thanks{$it.note$}%
+$endif$}
 $endfor$
+}{%else
+$for(authors[0:9])$
+\author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$%
+$if(authors.equal-contrib)$*$endif$%
+$if(authors.cor-id)$\ensuremath\mathparagraph$endif$]{$authors.name$%
+$if(it.orcid)$
+  \,\orcidlink{${it.orcid}}\,%
+$endif$
+$if(it.note)$
+  \thanks{$it.note$}%
+$endif$}
+$endfor$
+\author[...]{... et al.}
+}%
 
 $for(affiliations)$
 \affil[$affiliations.index$]{$affiliations.name$}
