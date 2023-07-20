@@ -386,46 +386,35 @@ $if(subtitle)$
 \subtitle{$subtitle$}
 $endif$
 
-\newcounter{authorcount}
-\setcounter{authorcount}{0}
-
 $for(authors)$
-  % Increment the author count for each iteration
-  \stepcounter{authorcount}
-
-  % Only display the first 10 authors and the last author
-  $if(authors.equal-contrib)$
-    % Display the asterisk for equal-contrib authors
-    $if(it.orcid)$
-      \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$]{$authors.name$\thanks{$it.note$}*\,\orcidlink{${it.orcid}}\,}
-    $else$
-      \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$]{$authors.name$\thanks{$it.note$}*}
+\ifnumless{\author_number$}{11}{%
+    % Display all authors if there are 10 or fewer
+    \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$%
+    $if(authors.equal-contrib)$*$endif$%
+    $if(authors.cor-id)$\ensuremath\mathparagraph$endif$]{$authors.name$%
+    $if(authors.orcid)$
+      \,\orcidlink{${it.orcid}}\,%
     $endif$
-  $else$
-    \ifnumcomp{\value{authorcount}}{<}{11}{ % Display the first 10 authors
-      $if(it.orcid)$
-        \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$]{$authors.name$\thanks{$it.note$}\,\orcidlink{${it.orcid}}\,}
-      $else$
-        \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$]{$authors.name$\thanks{$it.note$}}
-      $endif$
-    }{
-      $if(authors.cor-id)$
-        % Display the last author with the special cor-id symbol
-        \ifnumcomp{\value{authorcount}}{=}{$len(authors)$}{
-          \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$]{\ensuremath\mathparagraph$authors.name$}
-        }{}
-      $else$
-        % Display the last author without special symbols
-        \ifnumcomp{\value{authorcount}}{=}{$len(authors)$}{
-          $if(it.orcid)$
-            \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$]{$authors.name$\thanks{$it.note$}\,\orcidlink{${it.orcid}}\,}
-          $else$
-            \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$]{$authors.name$\thanks{$it.note$}}
-          $endif$
-        }{}
-      $endif$
-    }
-  $endif$
+    $if(authors.note)$
+      \thanks{$it.note$}%
+    $endif$
+    }%
+}{%
+    % If there are more than 10 authors, display the first 10 and the last author with "et al."
+    $for(authors[0:9])$
+    \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$%
+    $if(authors.equal-contrib)$*$endif$%
+    $if(authors.cor-id)$\ensuremath\mathparagraph$endif$]{$authors.name$%
+    $if(authors.orcid)$
+      \,\orcidlink{${it.orcid}}\,%
+    $endif$
+    $if(authors.note)$
+      \thanks{$it.note$}%
+    $endif$
+    }%
+    $endfor$
+    \author[...]{... et al.}
+}%
 $endfor$
 
 $for(affiliations)$
