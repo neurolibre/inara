@@ -256,17 +256,6 @@ $endif$
 \renewcommand\Affilfont{\sffamily\small\mdseries}
 \setlength{\affilsep}{1em}
 
-% Adjust font size for long author lists
-\newlength{\authorlistheight}
-\newcommand{\checkauthorlistheight}{%
-  \setlength{\authorlistheight}{\heightof{\AB@affillist}}%
-  \ifdim\authorlistheight > 0.8\textheight 
-    \renewcommand{\AB@affilnote}[1]{{\small\bfseries ##1}\hspace{3pt}}%
-  \fi
-}
-
-\AtBeginDocument{\checkauthorlistheight}
-
 \ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
   \usepackage[$if(fontenc)$$fontenc$$else$T1$endif$]{fontenc}
   \usepackage[utf8]{inputenc}
