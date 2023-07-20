@@ -390,7 +390,7 @@ $endif$
 \newcounter{authorcounter}
 \setcounter{authorcounter}{1}
 
-\ifnumless{$author_number$}{11}{
+\ifnum\value{author_number} < 11 {
 
 $for(authors)$
 \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$%
@@ -403,6 +403,7 @@ $if(it.note)$
   \thanks{$it.note$}%
 $endif$}
 $endfor$
+
 }{%else
 
 $for(authors)$
