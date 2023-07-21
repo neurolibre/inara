@@ -386,8 +386,6 @@ $if(subtitle)$
 \subtitle{$subtitle$}
 $endif$
 
-The paper has $author_number$ authors.
-
 \date{\vspace{-2.5ex}}
 
 \begin{document}
@@ -399,7 +397,7 @@ $if(abstract)$
 $abstract$
 \end{abstract}
 $endif$
-
+The paper has $author_number$ authors.
 \marginpar{
 
   \begin{flushleft}
