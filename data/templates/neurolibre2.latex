@@ -22,7 +22,7 @@ $if(keywords)$
     pdfkeywords={$for(keywords)$$keywords$$sep$; $endfor$},
 $endif$
     pdfpublication={$journal.title$},
-    pdfpublisher={Open Journals},
+    pdfpublisher={NeuroLibre},
     pdfissn={$journal.issn$},
     pdfpubtype={journal},
     pdfvolumenum={$volume$},
@@ -398,8 +398,6 @@ $abstract$
 \end{abstract}
 $endif$
 
-The paper has $author_number$ authors.
-
 \newcounter{authorcounter}
 \setcounter{authorcounter}{1}
 
@@ -407,36 +405,36 @@ The paper has $author_number$ authors.
 \setcounter{author_num}{$author_number$}
 
 \ifnum\value{author_num} < 11
-    $for(authors)$
-        \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$%
-        $if(authors.equal-contrib)$*$endif$%
-        $if(authors.cor-id)$\ensuremath\mathparagraph$endif$]{$authors.name$%
-        $if(authors.orcid)$
-            \,\orcidlink{${authors.orcid}}\,
-        $endif$
-        $if(authors.note)$
-            \thanks{$authors.note$}%
-        $endif$}
-    $endfor$
+$for(authors)$
+\author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$%
+$if(authors.equal-contrib)$*$endif$%
+$if(authors.cor-id)$\ensuremath\mathparagraph$endif$]{$authors.name$%
+$if(authors.orcid)$
+  \,\orcidlink{${authors.orcid}}\,
+$endif$
+$if(authors.note)$
+  \thanks{$authors.note$}%
+$endif$}
+$endfor$
 \else
-    $for(authors)$
-        \ifnum\value{authorcounter}<11
-            \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$%
-            $if(authors.equal-contrib)$*$endif$%
-            $if(authors.cor-id)$\ensuremath\mathparagraph$endif$]{$authors.name$%
-            $if(authors.orcid)$
-                \,\orcidlink{${authors.orcid}}\,
-            $endif$
-            $if(authors.note)$
-                \thanks{$authors.note$}%
-            $endif$}
-            \stepcounter{authorcounter}
-        \else
-            \ifnum\value{authorcounter}=\value{author_num}
-                \author{... et al.}
-            \fi
-        \fi
-    $endfor$
+$for(authors)$
+\ifnum\value{authorcounter}<11
+\author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$%
+$if(authors.equal-contrib)$*$endif$%
+$if(authors.cor-id)$\ensuremath\mathparagraph$endif$]{$authors.name$%
+$if(authors.orcid)$
+  \,\orcidlink{${authors.orcid}}\,
+$endif$
+$if(authors.note)$
+  \thanks{$authors.note$}%
+$endif$}
+\stepcounter{authorcounter}
+\else
+\ifnum\value{authorcounter}=\value{author_num}
+ {... et al.}
+\fi
+\fi
+$endfor$
 \fi
 
 
@@ -547,6 +545,19 @@ $if(lof)$
 \listoffigures
 $endif$
 $body$
+
+\ifnum\value{author_num} > 11
+$for(affiliations)$
+\affil[$affiliations.index$]{$affiliations.name$}
+$endfor$
+$if(article.author-notes.corresp)$
+\affil[$$\mathparagraph$$]{Corresponding author}
+$endif$
+$if(article.has-equal-contributors)$
+\affil[*]{$if(message.equal-contrib)$$message.equal-contrib$$else$These authors contributed equally.$endif$}
+$endif$
+\date{\vspace{-2.5ex}}
+\fi
 
 $if(natbib)$
 $if(bibliography)$
