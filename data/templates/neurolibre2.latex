@@ -546,10 +546,6 @@ $if(lof)$
 $endif$
 $body$
 
-\newcounter{affil_num}
-\setcounter{affil_num}{$author_number$}
-
-\ifnum\value{affil_num} > 11
 $for(affiliations)$
 \affil[$affiliations.index$]{$affiliations.name$}
 $endfor$
@@ -560,7 +556,7 @@ $if(article.has-equal-contributors)$
 \affil[*]{$if(message.equal-contrib)$$message.equal-contrib$$else$These authors contributed equally.$endif$}
 $endif$
 \date{\vspace{-2.5ex}}
-\fi
+
 
 $if(natbib)$
 $if(bibliography)$
