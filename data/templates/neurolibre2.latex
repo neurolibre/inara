@@ -403,42 +403,38 @@ The paper has $author_number$ authors.
 \newcounter{authorcounter}
 \setcounter{authorcounter}{1}
 
-\ifnum\value{author_number} < 11 {
-
- $for(authors)$
- \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$%
- $if(authors.equal-contrib)$*$endif$%
- $if(authors.cor-id)$\ensuremath\mathparagraph$endif$]{$authors.name$%
- $if(it.orcid)$
-   \,\orcidlink{${it.orcid}}\,
- $endif$
- $if(it.note)$
-   \thanks{$it.note$}%
- $endif$}
- $endfor$
-
- }{%else
-
- $for(authors)$
- \ifnum\value{authorcounter}<11
-     \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$%
-     $if(authors.equal-contrib)$*$endif$%
-     $if(authors.cor-id)$\ensuremath\mathparagraph$endif$]{$authors.name$%
-     $if(authors.orcid)$
-       \,\orcidlink{${it.orcid}}\,%
-     $endif$
-     $if(authors.note)$
-       \thanks{$it.note$}%
-     $endif$
-     }%
- \else
-     \ifnum\value{authorcounter}=\author_number
-         \author{... et al.}
-     \fi
- \fi
- \stepcounter{authorcounter}
-
- }%
+\ifnum\value{author_number} < 11
+    $for(authors)$
+        \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$%
+        $if(authors.equal-contrib)$*$endif$%
+        $if(authors.cor-id)$\ensuremath\mathparagraph$endif$]{$authors.name$%
+        $if(authors.orcid)$
+            \,\orcidlink{${authors.orcid}}\,
+        $endif$
+        $if(authors.note)$
+            \thanks{$authors.note$}%
+        $endif$}
+    $endfor$
+\else
+    $for(authors)$
+        \ifnum\value{authorcounter}<11
+            \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$%
+            $if(authors.equal-contrib)$*$endif$%
+            $if(authors.cor-id)$\ensuremath\mathparagraph$endif$]{$authors.name$%
+            $if(authors.orcid)$
+                \,\orcidlink{${authors.orcid}}\,
+            $endif$
+            $if(authors.note)$
+                \thanks{$authors.note$}%
+            $endif$}
+            \stepcounter{authorcounter}
+        \else
+            \ifnum\value{authorcounter}=\value{author_number}
+                \author{... et al.}
+            \fi
+        \fi
+    $endfor$
+\fi
 
 
 \marginpar{
