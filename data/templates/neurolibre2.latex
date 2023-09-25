@@ -431,7 +431,7 @@ $endif$}
 \stepcounter{authorcounter}
 \else
 \ifnum\value{authorcounter}=\value{author_num}
- {... et al.}
+   et. al.
 \fi
 \fi
 $endfor$
@@ -546,7 +546,10 @@ $if(lof)$
 $endif$
 $body$
 
-\ifnum\value{author_num} > 11
+\newcounter{affil_num}
+\setcounter{affil_num}{$author_number$}
+
+\ifnum\value{affil_num} > 11
 $for(affiliations)$
 \affil[$affiliations.index$]{$affiliations.name$}
 $endfor$
