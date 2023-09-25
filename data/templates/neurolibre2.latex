@@ -403,7 +403,10 @@ The paper has $author_number$ authors.
 \newcounter{authorcounter}
 \setcounter{authorcounter}{1}
 
-\ifnum\value{author_number} < 11
+\newcounter{author_num}
+\setcounter{author_num}{$author_number$}
+
+\ifnum\value{author_num} < 11
     $for(authors)$
         \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$%
         $if(authors.equal-contrib)$*$endif$%
@@ -429,7 +432,7 @@ The paper has $author_number$ authors.
             $endif$}
             \stepcounter{authorcounter}
         \else
-            \ifnum\value{authorcounter}=\value{author_number}
+            \ifnum\value{authorcounter}=\value{author_num}
                 \author{... et al.}
             \fi
         \fi
