@@ -587,7 +587,6 @@ $endfor$
 \AtEndDocument{%
   \section*{Affiliations}
   \begin{enumerate}
-    \forcsvlist{\listadd{\affiliations}}{\affiliations}
     \forlistloop{\item}{\affiliations}
     $if(article.author-notes.corresp)$
       \item[$$\mathparagraph$$] Corresponding author
