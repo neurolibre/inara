@@ -433,7 +433,7 @@ $endfor$
 
 \newcommand{\addaffiliation}[2]{%
   \stepcounter{affilcounter}%
-  \gappto{\affiliations}{\item[$#1$] #2}%
+  \listxadd{\affiliations}{\noexpand\item[$#1$] #2}%
 }
 
 \begin{document}
@@ -586,7 +586,8 @@ $endfor$
 \AtEndDocument{%
   \section*{Affiliations}
   \begin{enumerate}
-    \affiliations
+    \forcsvlist{\listadd{\affiliations}}{\affiliations}
+    \forlistloop{\item}{\affiliations}
     $if(article.author-notes.corresp)$
       \item[$$\mathparagraph$$] Corresponding author
     $endif$
