@@ -428,13 +428,10 @@ $endfor$
 
 
 % Add affiliations -------------- 1
-\newcounter{affilcounter}
-\newcommand{\affiliations}{}
-
-\newcommand{\addaffiliation}[2]{%
-  \stepcounter{affilcounter}%
-  \edef\temp{\noexpand\item[$##1$] #2}%
-  \listxadd{\affiliations}{\temp}%
+% Define a command for printing the affiliations
+\newcommand{\printAffiliations}[1]{%
+  \renewcommand*{\do}[1]{\affil[\the\numexpr##1\relax]{##1}}%
+  \docsvlist{#1}%
 }
 
 \begin{document}
@@ -585,16 +582,15 @@ $endfor$
 
 \clearpage
 \AtEndDocument{%
-  \section*{Affiliations}
-  \begin{enumerate}
-    \forlistloop{\item}{\affiliations}
-    $if(article.author-notes.corresp)$
-      \item[$$\mathparagraph$$] Corresponding author
-    $endif$
-    $if(article.has-equal-contributors)$
-      \item[*] $if(message.equal-contrib)$$message.equal-contrib$$else$These authors contributed equally.$endif$
-    $endif$
-  \end{enumerate}
+  \printAffiliations{\affiliations}
+  
+  $if(article.author-notes.corresp)$
+  \affil[$\mathparagraph$]{Corresponding author}
+  $endif$
+  
+  $if(article.has-equal-contributors)$
+  \affil[*]{$if(message.equal-contrib)$$message.equal-contrib$$else$These authors contributed equally.$endif$}
+  $endif$
 }
 
 \end{document}
