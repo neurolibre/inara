@@ -386,8 +386,7 @@ $if(subtitle)$
 \subtitle{$subtitle$}
 $endif$
 
-\clearpage
-\AtEndDocument{%
+
 $for(affiliations)$
 \affil[$affiliations.index$]{$affiliations.name$}
 $endfor$
@@ -397,7 +396,6 @@ $endif$
 $if(article.has-equal-contributors)$
 \affil[*]{$if(message.equal-contrib)$$message.equal-contrib$$else$These authors contributed equally.$endif$}
 $endif$
-}
 
 \newcounter{authorcounter}
 \setcounter{authorcounter}{1}
