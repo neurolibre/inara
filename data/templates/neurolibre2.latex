@@ -430,7 +430,9 @@ $endif$
 % Add affiliations -------------- 1
 % Define a command for printing the affiliations
 \newcommand{\printAffiliations}[1]{%
-  \renewcommand*{\do}[1]{\affil[\the\numexpr##1\relax]{##1}}%
+  \def\do##1{%
+    \affil[$##1.index$]{$##1.name$}%
+  }%
   \docsvlist{#1}%
 }
 
@@ -577,7 +579,7 @@ $endfor$
 
 \clearpage
 \AtEndDocument{%
-  \printAffiliations{\affiliations}
+  \printAffiliations{affiliations}
   
   $if(article.author-notes.corresp)$
   \affil[$$\mathparagraph$$]{Corresponding author}
