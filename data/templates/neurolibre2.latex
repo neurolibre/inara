@@ -392,6 +392,8 @@ $endif$
 \newcounter{author_num}
 \setcounter{author_num}{$author_number$}
 
+There are $author_number$ authors.
+
 \ifnum\value{author_num} < 11
   $for(authors)$
   \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$%
@@ -405,6 +407,7 @@ $endif$
   $endif$}
   $endfor$
 \else
+  This is the condition.
   $for(authors)$
   \ifnum\value{authorcounter}<11
   \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$%
@@ -426,14 +429,17 @@ $endif$
 \fi
 \date{\vspace{-2.5ex}}
 
-
-% Add affiliations -------------- 1
-% Define a command for printing the affiliations
-\newcommand{\printAffiliations}[1]{%
-  \def\do##1{%
-    \affil[$##1.index$]{$##1.name$}%
-  }%
-  \docsvlist{#1}%
+\clearpage
+\AtEndDocument{%
+$for(affiliations)$
+\affil[$affiliations.index$]{$affiliations.name$}
+$endfor$
+$if(article.author-notes.corresp)$
+\affil[$$\mathparagraph$$]{Corresponding author}
+$endif$
+$if(article.has-equal-contributors)$
+\affil[*]{$if(message.equal-contrib)$$message.equal-contrib$$else$These authors contributed equally.$endif$}
+$endif$
 }
 
 \begin{document}
@@ -576,17 +582,5 @@ $for(include-after)$
 $include-after$
 
 $endfor$
-
-\clearpage
-\AtEndDocument{%
-  \printAffiliations{affiliations}
-  
-  $if(article.author-notes.corresp)$
-  \affil[$$\mathparagraph$$]{Corresponding author}
-  $endif$
-  $if(article.has-equal-contributors)$
-  \affil[*]{$if(message.equal-contrib)$$message.equal-contrib$$else$These authors contributed equally.$endif$}
-  $endif$
-}
 
 \end{document}
