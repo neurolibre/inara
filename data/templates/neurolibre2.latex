@@ -426,22 +426,23 @@ $endfor$
 \fi
 \date{\vspace{-2.5ex}}
 
-\AtEndDocument{%
-  \clearpage
-  \section*{Affiliations}
-$for(affiliations)$
-\affil[$affiliations.index$]{$affiliations.name$}
-$endfor$
-$if(article.author-notes.corresp)$
-\affil[$$\mathparagraph$$]{Corresponding author}
-$endif$
-$if(article.has-equal-contributors)$
-\affil[*]{$if(message.equal-contrib)$$message.equal-contrib$$else$These authors contributed equally.$endif$}
-$endif$
-\date{\vspace{-2.5ex}}
+
+% Add affiliations -------------- 1
+\newcounter{affilcounter}
+\newcommand{\affiliations}{}
+
+\newcommand{\addaffiliation}[2]{%
+  \stepcounter{affilcounter}%
+  \gappto{\affiliations}{\item[$#1$] #2}%
 }
 
 \begin{document}
+
+% Add affiliations -------------- 2 
+$for(affiliations)$
+\addaffiliation{$affiliations.index$}{$affiliations.name$}
+$endfor$
+
 $if(title)$
 \maketitle
 $endif$
@@ -580,4 +581,19 @@ $for(include-after)$
 $include-after$
 
 $endfor$
+
+\clearpage
+\AtEndDocument{%
+  \section*{Affiliations}
+  \begin{enumerate}
+    \affiliations
+    $if(article.author-notes.corresp)$
+      \item[$$\mathparagraph$$] Corresponding author
+    $endif$
+    $if(article.has-equal-contributors)$
+      \item[*] $if(message.equal-contrib)$$message.equal-contrib$$else$These authors contributed equally.$endif$
+    $endif$
+  \end{enumerate}
+}
+
 \end{document}
