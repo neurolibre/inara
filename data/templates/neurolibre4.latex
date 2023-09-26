@@ -542,7 +542,6 @@ $for(include-after)$
 $include-after$
 
 $endfor$
-\end{document}
 
 \clearpage
 $for(affiliations)$
@@ -554,3 +553,6 @@ $endif$
 $if(article.has-equal-contributors)$
 \affil[*]{$if(message.equal-contrib)$$message.equal-contrib$$else$These authors contributed equally.$endif$}
 $endif$
+
+\end{document}
+
