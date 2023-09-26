@@ -433,7 +433,7 @@ $endfor$
 
 \newcommand{\addaffiliation}[2]{%
   \stepcounter{affilcounter}%
-  \edef\temp{\noexpand\item[$#1$] #2}%
+  \edef\temp{\noexpand\item[$##1$] #2}%
   \listxadd{\affiliations}{\temp}%
 }
 
