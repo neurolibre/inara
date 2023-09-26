@@ -386,6 +386,7 @@ $if(subtitle)$
 \subtitle{$subtitle$}
 $endif$
 
+\clearpage
 $for(authors)$
 \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$%
 $if(authors.equal-contrib)$*$endif$%
