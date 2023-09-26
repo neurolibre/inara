@@ -392,6 +392,12 @@ $endif$
 \newcounter{author_num}
 \setcounter{author_num}{$author_number$}
 
+\begin{document}
+
+$if(title)$
+\maketitle
+$endif$
+
 There are $author_number$ authors.
 
 \ifnum\value{author_num} < 11
@@ -442,11 +448,6 @@ $if(article.has-equal-contributors)$
 $endif$
 }
 
-\begin{document}
-
-$if(title)$
-\maketitle
-$endif$
 $if(abstract)$
 \begin{abstract}
 $abstract$
