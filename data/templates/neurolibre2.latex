@@ -386,18 +386,6 @@ $if(subtitle)$
 \subtitle{$subtitle$}
 $endif$
 
-\date{\vspace{-2.5ex}}
-
-\begin{document}
-$if(title)$
-\maketitle
-$endif$
-$if(abstract)$
-\begin{abstract}
-$abstract$
-\end{abstract}
-$endif$
-
 \newcounter{authorcounter}
 \setcounter{authorcounter}{1}
 
@@ -436,7 +424,32 @@ $endif$}
 \fi
 $endfor$
 \fi
+\date{\vspace{-2.5ex}}
 
+\AtEndDocument{%
+  \clearpage
+  \section*{Affiliations}
+$for(affiliations)$
+\affil[$affiliations.index$]{$affiliations.name$}
+$endfor$
+$if(article.author-notes.corresp)$
+\affil[$$\mathparagraph$$]{Corresponding author}
+$endif$
+$if(article.has-equal-contributors)$
+\affil[*]{$if(message.equal-contrib)$$message.equal-contrib$$else$These authors contributed equally.$endif$}
+$endif$
+\date{\vspace{-2.5ex}}
+}
+
+\begin{document}
+$if(title)$
+\maketitle
+$endif$
+$if(abstract)$
+\begin{abstract}
+$abstract$
+\end{abstract}
+$endif$
 
 \marginpar{
 
@@ -545,18 +558,6 @@ $if(lof)$
 \listoffigures
 $endif$
 $body$
-
-$for(affiliations)$
-\affil[$affiliations.index$]{$affiliations.name$}
-$endfor$
-$if(article.author-notes.corresp)$
-\affil[$$\mathparagraph$$]{Corresponding author}
-$endif$
-$if(article.has-equal-contributors)$
-\affil[*]{$if(message.equal-contrib)$$message.equal-contrib$$else$These authors contributed equally.$endif$}
-$endif$
-\date{\vspace{-2.5ex}}
-
 
 $if(natbib)$
 $if(bibliography)$
