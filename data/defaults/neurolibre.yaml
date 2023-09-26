@@ -17,4 +17,4 @@ variables:
   urlcolor: '[rgb]{0.0, 0.5, 1.0}'
 
 
-template: '${.}/../templates/neurolibre.latex'
+template: '${.}/../templates/neurolibre4.latex'

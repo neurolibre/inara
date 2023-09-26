@@ -386,6 +386,8 @@ $if(subtitle)$
 \subtitle{$subtitle$}
 $endif$
 
+\clearpage
+$author_number$
 $for(authors)$
 \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$%
 $if(authors.equal-contrib)$*$endif$%
@@ -399,15 +401,6 @@ $endif$
 }
 $endfor$
 
-$for(affiliations)$
-\affil[$affiliations.index$]{$affiliations.name$}
-$endfor$
-$if(article.author-notes.corresp)$
-\affil[$$\mathparagraph$$]{Corresponding author}
-$endif$
-$if(article.has-equal-contributors)$
-\affil[*]{$if(message.equal-contrib)$$message.equal-contrib$$else$These authors contributed equally.$endif$}
-$endif$
 \date{\vspace{-2.5ex}}
 
 \begin{document}
@@ -550,3 +543,14 @@ $include-after$
 
 $endfor$
 \end{document}
+
+\clearpage
+$for(affiliations)$
+\affil[$affiliations.index$]{$affiliations.name$}
+$endfor$
+$if(article.author-notes.corresp)$
+\affil[$$\mathparagraph$$]{Corresponding author}
+$endif$
+$if(article.has-equal-contributors)$
+\affil[*]{$if(message.equal-contrib)$$message.equal-contrib$$else$These authors contributed equally.$endif$}
+$endif$
