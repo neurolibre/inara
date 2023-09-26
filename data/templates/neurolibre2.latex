@@ -585,9 +585,8 @@ $endfor$
   \printAffiliations{\affiliations}
   
   $if(article.author-notes.corresp)$
-  \affil[$\mathparagraph$]{Corresponding author}
+  \affil[$$\mathparagraph$$]{Corresponding author}
   $endif$
-  
   $if(article.has-equal-contributors)$
   \affil[*]{$if(message.equal-contrib)$$message.equal-contrib$$else$These authors contributed equally.$endif$}
   $endif$
