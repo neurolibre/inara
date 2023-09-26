@@ -386,6 +386,19 @@ $if(subtitle)$
 \subtitle{$subtitle$}
 $endif$
 
+\clearpage
+\AtEndDocument{%
+$for(affiliations)$
+\affil[$affiliations.index$]{$affiliations.name$}
+$endfor$
+$if(article.author-notes.corresp)$
+\affil[$$\mathparagraph$$]{Corresponding author}
+$endif$
+$if(article.has-equal-contributors)$
+\affil[*]{$if(message.equal-contrib)$$message.equal-contrib$$else$These authors contributed equally.$endif$}
+$endif$
+}
+
 \newcounter{authorcounter}
 \setcounter{authorcounter}{1}
 
@@ -434,19 +447,6 @@ There are $author_number$ authors.
   $endfor$
 \fi
 \date{\vspace{-2.5ex}}
-
-\clearpage
-\AtEndDocument{%
-$for(affiliations)$
-\affil[$affiliations.index$]{$affiliations.name$}
-$endfor$
-$if(article.author-notes.corresp)$
-\affil[$$\mathparagraph$$]{Corresponding author}
-$endif$
-$if(article.has-equal-contributors)$
-\affil[*]{$if(message.equal-contrib)$$message.equal-contrib$$else$These authors contributed equally.$endif$}
-$endif$
-}
 
 $if(abstract)$
 \begin{abstract}
