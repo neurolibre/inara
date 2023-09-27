@@ -46,18 +46,18 @@ $endif$
 }
 % https://tex.stackexchange.com/a/535849
 % Create an OutputIntent in order to correctly specify colours
-\immediate\pdfobj stream attr{/N 3} file{sRGB.icc}
-\pdfcatalog{%
-  /OutputIntents [
-    <<
-      /Type /OutputIntent
-      /S /GTS_PDFA1
-      /DestOutputProfile \the\pdflastobj\space 0 R
-      /OutputConditionIdentifier (sRGB)
-      /Info (sRGB)
-    >>
-  ]
-}
+% \immediate\pdfobj stream attr{/N 3} file{sRGB.icc}
+% \pdfcatalog{%
+%   /OutputIntents [
+%     <<
+%       /Type /OutputIntent
+%       /S /GTS_PDFA1
+%       /DestOutputProfile \the\pdflastobj\space 0 R
+%       /OutputConditionIdentifier (sRGB)
+%       /Info (sRGB)
+%     >>
+%   ]
+% }
 \pdfvariable omitcidset=1
 \usepackage{caption}
 \usepackage{orcidlink}
@@ -106,9 +106,7 @@ $endif$
             headheight=2.2cm, reversemp, includemp, marginparwidth=4.5cm]{geometry}
 
 % --- Default font ------------------------------------------------------------
-$if(joss)$
-\renewcommand\familydefault{\sfdefault}
-$endif$
+\renewcommand{\familydefault}{\sfdefault}
 
 % --- Style -------------------------------------------------------------------
 \renewcommand{\captionfont}{\small\sffamily}
@@ -386,8 +384,9 @@ $if(subtitle)$
 \subtitle{$subtitle$}
 $endif$
 
-\clearpage
-$author_number$
+% ------------- This section is executed for maketitle if 
+% the number of authors are < 10. Default joss \maketitle
+$if(noMoreThanTenAuthors)$
 $for(authors)$
 \author[$for(authors.affiliation)$$authors.affiliation$$sep$,$endfor$%
 $if(authors.equal-contrib)$*$endif$%
@@ -401,12 +400,43 @@ $endif$
 }
 $endfor$
 
+$for(affiliations)$
+\affil[$affiliations.index$]{$affiliations.name$}
+$endfor$
+$if(article.author-notes.corresp)$
+\affil[$$\mathparagraph$$]{Corresponding author}
+$endif$
+$if(article.has-equal-contributors)$
+\affil[*]{$if(message.equal-contrib)$$message.equal-contrib$$else$These authors contributed equally.$endif$}
+$endif$
+$endif$
+
 \date{\vspace{-2.5ex}}
 
 \begin{document}
+
+% Authblk behaves awkwardly when there are too many authors 
+% NeuroLibre lua filter handles that. Therefore, the default \maketitle 
+% gets executed when there are equal or less than 10 authors.
+$if(noMoreThanTenAuthors)$
 $if(title)$
 \maketitle
 $endif$
+$endif$
+
+$if(moreThanTenAuthors)$
+{\begin{flushleft} \LARGE\sffamily $title$ \end{flushleft}}
+
+\vspace{1em}
+
+{\begin{flushleft} $authorsWithAffiliations$ \end{flushleft} }
+
+$if(article.has-equal-contributors)$
+{$if(message.equal-contrib)$$message.equal-contrib$$else$* These authors contributed equally.$endif$}
+$endif$
+
+$endif$
+
 $if(abstract)$
 \begin{abstract}
 $abstract$
@@ -521,6 +551,14 @@ $if(lof)$
 $endif$
 $body$
 
+\section{Affiliations}
+
+$if(moreThanTenAuthors)$
+
+{\Affilfont $affiliationsList$}
+
+$endif$
+
 $if(natbib)$
 $if(bibliography)$
 $if(biblio-title)$
@@ -542,17 +580,4 @@ $for(include-after)$
 $include-after$
 
 $endfor$
-
-\clearpage
-$for(affiliations)$
-\affil[$affiliations.index$]{$affiliations.name$}
-$endfor$
-$if(article.author-notes.corresp)$
-\affil[$$\mathparagraph$$]{Corresponding author}
-$endif$
-$if(article.has-equal-contributors)$
-\affil[*]{$if(message.equal-contrib)$$message.equal-contrib$$else$These authors contributed equally.$endif$}
-$endif$
-
 \end{document}
-

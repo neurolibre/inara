@@ -12,19 +12,19 @@ local List = require 'pandoc.List'
 local stringify = pandoc.utils.stringify
 
 local defaults = {
-  archive_doi = '10.5281',
+  archive_doi = '10.55458',
   editor = {
-    name = 'Open Journals',
-    url = 'https://joss.theoj.org',
-    github_user = '@openjournals',
+    name = 'NeuroLibre',
+    url = 'https://neurolibre.org',
+    github_user = '@roboneuro',
   },
   citation_author = '¿citation_author?',
   issue = '¿ISSUE?',
   page = '¿PAGE?',
   paper_url = 'NO PAPER URL',
-  reviewers = {'openjournals'},
-  software_repository_url = 'https://github.com/openjournals',
-  software_review_url = 'https://github.com/openjournals',
+  reviewers = {'roboneuro'},
+  software_repository_url = 'https://github.com/neurolibre',
+  software_review_url = 'https://github.com/neurolibre',
   volume = '¿VOL?',
 }
 
