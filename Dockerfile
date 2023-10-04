@@ -1,6 +1,7 @@
 FROM pandoc/latex:3.1.1-alpine
 
-RUN apk add --no-cache ttf-hack
+RUN apk add --no-cache ttf-hack; \
+    adduser -D -u 1000 -g 'www-data' ubuntu
 
 # Install additional LaTeX packages
 RUN tlmgr update --self && tlmgr install \
