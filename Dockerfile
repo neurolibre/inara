@@ -1,8 +1,8 @@
 FROM pandoc/latex:3.1.1-alpine
 
 RUN apk add --no-cache ttf-hack; \
-    addgroup -g 1000 www-data; \
-    adduser -u 1000 -G www-data -D ubuntu
+    addgroup -g 100 users; \
+    adduser -u 1000 -G users -D ubuntu
 
 # Install additional LaTeX packages
 RUN tlmgr update --self && tlmgr install \
