@@ -12,6 +12,7 @@ filters:
     path: self-citation.lua
   - type: lua
     path: neurolibre-handle-crowd.lua
+
 variables:
   # styling options
   colorlinks: true

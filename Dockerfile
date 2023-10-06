@@ -34,7 +34,9 @@ RUN tlmgr update --self && tlmgr install \
   trimspaces \
   xcolor \
   xkeyval \
-  xstring
+  xstring \
+  fontawesome5 \
+  awesomebox
 
 
 ENV OSFONTDIR=/usr/share/fonts

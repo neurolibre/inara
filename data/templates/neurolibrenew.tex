@@ -8,6 +8,7 @@
 \usepackage{tikz}
 \usepackage[pdfa]{hyperref}
 \usepackage{hyperxmp}
+\usepackage{awesomebox}
 \hypersetup{%
     unicode=true,
     pdfapart=3,
@@ -549,6 +550,9 @@ $endif$
 $if(lof)$
 \listoffigures
 $endif$
+
+\awesomebox[red]{2pt}{\faRocket}{red}{\textbf{THIS PDF IS INTENDED FOR CONTENT REGISTRATION PURPOSES ONLY!  FOR FULL ACCESS AND INTERACTIVE READING OF THIS PUBLICATION, PLEASE VISIT \href{https://preprint.neurolibre.org/$article.doi$}{THE REPRODUCIBLE PREPRINT}.}}
+
 $body$
 
 
