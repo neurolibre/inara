@@ -37,7 +37,7 @@ function Meta (meta)
         ['container-title-short'] = meta.journal['abbrev-title'],
         -- ['ISSN'] = meta.journal.issn,
         -- ['issue'] = stringify(meta.article.issue),
-        -- ['page'] = stringify(meta.article.fpage),
+        ['page'] = stringify(meta.article.fpage),
         -- ['volume'] = stringify(meta.article.volume),
         ['submitted'] = meta.submitted,
         ['published'] = meta.published,

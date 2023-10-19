@@ -42,7 +42,7 @@ local function preferred_citation(meta)
     ['journal'] = journal.title,
     ['keywords'] = meta.tag,
     ['publisher'] = {name = journal['publisher-name']},
-    -- ['start'] = article.fpage,
+    ['start'] = article.fpage,
     ['title'] = stringify(meta.title),
     ['type'] = 'preprint',
     ['url'] = ('https://neurolibre.org/papers/%s'):format(stringify(article.doi)),
