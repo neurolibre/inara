@@ -62,42 +62,12 @@ $endfor$
           <ai:license_ref applies_to="tdm">http://creativecommons.org/licenses/by/4.0/</ai:license_ref>
         </ai:program>
         <rel:program>
-          $if(repository_doi)$
-          <rel:related_item>
-            <rel:description>Repository archive</rel:description>
-            <rel:inter_work_relation relationship-type="isSupplementedBy" identifier-type="doi">${repository_doi}$</rel:inter_work_relation>
-          </rel:related_item>
-          $endif$
-          $if(data_doi != "N/A")$
-          <rel:related_item>
-            <rel:description>Dataset archive</rel:description>
-            <rel:inter_work_relation relationship-type="isSupplementedBy" identifier-type="doi">$data_doi$</rel:inter_work_relation>
-          </rel:related_item>
-          $endif$
-          $if(book_doi)$
-          <rel:related_item>
-            <rel:description>Book archive</rel:description>
-            <rel:inter_work_relation relationship-type="isSupplementedBy" identifier-type="doi">${book_doi}$</rel:inter_work_relation>
-          </rel:related_item>
-          $endif$
-          $if(docker_doi != "N/A")$
-          <rel:related_item>
-            <rel:description>Container archive</rel:description>
-            <rel:inter_work_relation relationship-type="isSupplementedBy" identifier-type="doi">${docker_doi}$</rel:inter_work_relation>
-          </rel:related_item>
-          $endif$
-          $if(software_review_url)$
-          <rel:related_item>
-            <rel:description>GitHub technical screening</rel:description>
-            <rel:inter_work_relation relationship-type="isSupplementedBy" identifier-type="uri">${software_review_url}$</rel:inter_work_relation>
-          </rel:related_item>
-          $endif$
-          $if(book_exec_url)$
-          <rel:related_item>
-            <rel:description>Executable preprint</rel:description>
-            <rel:inter_work_relation relationship-type="isSupplementedBy" identifier-type="uri">${book_exec_url}$</rel:inter_work_relation>
-          </rel:related_item>
-          $endif$
+          $if(repository_doi)$<rel:related_item><rel:description>Repository archive</rel:description><rel:inter_work_relation relationship-type="isSupplementedBy" identifier-type="doi">${repository_doi}$</rel:inter_work_relation></rel:related_item>$endif$
+          $if(data_doi)$<rel:related_item><rel:description>Dataset archive</rel:description><rel:inter_work_relation relationship-type="isSupplementedBy" identifier-type="doi">$data_doi$</rel:inter_work_relation></rel:related_item>$endif$
+          $if(book_doi)$<rel:related_item><rel:description>Book archive</rel:description><rel:inter_work_relation relationship-type="isSupplementedBy" identifier-type="doi">${book_doi}$</rel:inter_work_relation></rel:related_item>$endif$
+          $if(docker_doi)$<rel:related_item><rel:description>Container archive</rel:description><rel:inter_work_relation relationship-type="isSupplementedBy" identifier-type="doi">${docker_doi}$</rel:inter_work_relation></rel:related_item>$endif$
+          $if(software_review_url)$<rel:related_item><rel:description>GitHub technical screening</rel:description><rel:inter_work_relation relationship-type="isSupplementedBy" identifier-type="uri">${software_review_url}$</rel:inter_work_relation></rel:related_item>$endif$
+          $if(book_exec_url)$<rel:related_item><rel:description>Executable preprint</rel:description><rel:inter_work_relation relationship-type="isSupplementedBy" identifier-type="uri">${book_exec_url}$</rel:inter_work_relation></rel:related_item>$endif$
         </rel:program>
         <doi_data>
           <doi>$article.doi$</doi>
