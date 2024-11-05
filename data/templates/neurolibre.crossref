@@ -62,7 +62,7 @@ $endfor$
           <ai:license_ref applies_to="tdm">http://creativecommons.org/licenses/by/4.0/</ai:license_ref>
         </ai:program>
         <rel:program>
-          $if(repository_doi)$
+          $if(repository_doi != 'N/A')$
           <rel:related_item><rel:description>Repository archive</rel:description><rel:inter_work_relation relationship-type="isSupplementedBy" identifier-type="doi">$repository_doi$</rel:inter_work_relation></rel:related_item>
           $endif$
           <rel:related_item><rel:description>Dataset archive</rel:description><rel:inter_work_relation relationship-type="isSupplementedBy" identifier-type="doi">$data_doi$</rel:inter_work_relation></rel:related_item>
