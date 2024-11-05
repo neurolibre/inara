@@ -7,5 +7,7 @@ filters:
     path: doi-batch-id.lua
   - type: lua
     path: flatten-references.lua
+  - type: lua
+    path: conditional-archives.lua
 
 template: '${.}/../templates/neurolibre.crossref'
