@@ -25,6 +25,11 @@ local defaults = {
   reviewers = {'roboneuro'},
   software_repository_url = 'https://github.com/neurolibre',
   software_review_url = 'https://github.com/neurolibre',
+  data_doi = 'N/A',
+  book_doi = 'N/A',
+  docker_doi = 'N/A',
+  book_exec_url = 'N/A',
+  repository_doi = 'N/A',
   volume = '¿VOL?',
 }
 
