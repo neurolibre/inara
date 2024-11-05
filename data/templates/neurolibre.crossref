@@ -63,7 +63,7 @@ $endfor$
         </ai:program>
         <rel:program>
           $if(repository_doi)$<rel:related_item><rel:description>Repository archive</rel:description><rel:inter_work_relation relationship-type="isSupplementedBy" identifier-type="doi">${repository_doi}$</rel:inter_work_relation></rel:related_item>$endif$
-          $if(data_doi)$<rel:related_item><rel:description>Dataset archive</rel:description><rel:inter_work_relation relationship-type="isSupplementedBy" identifier-type="doi">$data_doi$</rel:inter_work_relation></rel:related_item>$endif$
+          $if(data_doi)$<rel:related_item><rel:description>Dataset archive</rel:description><rel:inter_work_relation relationship-type="isSupplementedBy" identifier-type="doi">${data_doi}$</rel:inter_work_relation></rel:related_item>$endif$
           $if(book_doi)$<rel:related_item><rel:description>Book archive</rel:description><rel:inter_work_relation relationship-type="isSupplementedBy" identifier-type="doi">${book_doi}$</rel:inter_work_relation></rel:related_item>$endif$
           $if(docker_doi)$<rel:related_item><rel:description>Container archive</rel:description><rel:inter_work_relation relationship-type="isSupplementedBy" identifier-type="doi">${docker_doi}$</rel:inter_work_relation></rel:related_item>$endif$
           $if(software_review_url)$<rel:related_item><rel:description>GitHub technical screening</rel:description><rel:inter_work_relation relationship-type="isSupplementedBy" identifier-type="uri">${software_review_url}$</rel:inter_work_relation></rel:related_item>$endif$
