@@ -474,24 +474,24 @@ $endif$
   \begin{itemize}
     \setlength\itemsep{0em}
     $if(repository_doi)$
-    $if(repository_doi!="N/A")$
+    $if(repository_doi)$$if(repository_doi = "N/A")$$else$
     \item \href{https://doi.org/$repository_doi$}{\color{red}{Repository}} \ExternalLink
-    $endif$
+    $endif$$endif$
     $endif$
     $if(data_doi)$
-    $if(data_doi!="N/A")$
+    $if(data_doi)$$if(data_doi = "N/A")$$else$
     \item \href{https://doi.org/$data_doi$}{\color{red}{Dataset}} \ExternalLink
-    $endif$
+    $endif$$endif$
     $endif$
     $if(book_doi)$
-    $if(book_doi!="N/A")$
+    $if(book_doi)$$if(book_doi = "N/A")$$else$
     \item \href{https://doi.org/$book_doi$}{\color{red}{Jupyter Book}} \ExternalLink
-    $endif$
+    $endif$$endif$
     $endif$
     $if(docker_doi)$
-    $if(docker_doi!="N/A")$
+    $if(docker_doi)$$if(docker_doi = "N/A")$$else$
     \item \href{https://doi.org/$docker_doi$}{\color{red}{Container}} \ExternalLink
-    $endif$
+    $endif$$endif$
     $endif$
   \end{itemize}
 
