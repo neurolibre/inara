@@ -12,6 +12,8 @@ filters:
     path: self-citation.lua
   - type: lua
     path: neurolibre-handle-crowd.lua
+  - type: lua
+    path: conditional-archives.lua
 
 variables:
   # styling options
