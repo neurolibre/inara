@@ -473,16 +473,16 @@ $endif$
     {\bfseries Reproducibility Assets}
   \begin{itemize}
     \setlength\itemsep{0em}
-$if(include_repository_doi)$
+    $if(include_repository_doi)$
     \item \href{https://doi.org/$repository_doi$}{\color{red}{Repository}} \ExternalLink
-$endif$
-$if(include_data_doi)$
+    $endif$
+    $if(include_data_doi)$
     \item \href{https://doi.org/$data_doi$}{\color{red}{Dataset}} \ExternalLink
-$endif$
-$if(include_book_doi)$
+    $endif$
+    $if(include_book_doi)$
     \item \href{https://doi.org/$book_doi$}{\color{red}{Jupyter Book}} \ExternalLink
-$endif$
-$if(include_docker_doi)$
+    $endif$
+    $if(include_docker_doi)$
     \item \href{https://doi.org/$docker_doi$}{\color{red}{Container}} \ExternalLink
 $endif$
   \end{itemize}
