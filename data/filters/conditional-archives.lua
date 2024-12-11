@@ -1,7 +1,22 @@
 function Meta(meta)
+
+    local function dump(o)
+      if type(o) == 'table' then
+          local s = '{ '
+          for k,v in pairs(o) do
+              if type(k) ~= 'number' then k = '"'..k..'"' end
+              s = s .. '['..k..'] = ' .. dump(v) .. ','
+          end
+          return s .. '} '
+      else
+          return tostring(o)
+      end
+  end
+
     -- Check if each DOI is present and not set to 'N/A'
-    print("Repository DOI value:", tostring(meta.repository_doi and meta.repository_doi.text or "nil"))
+    print("Repository DOI structure:", dump(meta.repository_doi))
     if meta.repository_doi and meta.repository_doi.text ~= 'N/A' then
+      print("Repository DOI type:", type(meta.repository_doi))
       meta.include_repository_doi = true
       print("Including repository DOI")
     end
