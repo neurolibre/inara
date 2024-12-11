@@ -432,10 +432,10 @@ $endif$
 
    \vspace{2mm}
 
-    {\bfseries Reproducible Preprint}
+    {\bfseries Interactive Version}
   \begin{itemize}
     \setlength\itemsep{0em}
-    \item \href{$book_exec_url$}{\color{red}{Jupyter Book}} \ExternalLink
+    \item \href{$book_exec_url$}{\color{red}{Living Preprint}} \ExternalLink
   \end{itemize}
 
   \vspace{2mm}
@@ -454,7 +454,7 @@ $endif$
     \setlength\itemsep{0em}
     \item \href{https://doi.org/$repository_doi$}{\color{red}{Repository}} \ExternalLink
     \item \href{https://doi.org/$data_doi$}{\color{red}{Dataset}} \ExternalLink
-    \item \href{https://doi.org/$book_doi$}{\color{red}{Jupyter Book}} \ExternalLink
+    \item \href{https://doi.org/$book_doi$}{\color{red}{Living Preprint}} \ExternalLink
     \item \href{https://doi.org/$docker_doi$}{\color{red}{Container}} \ExternalLink
   \end{itemize}
 
