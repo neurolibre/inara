@@ -1,45 +1,30 @@
 function Meta(meta)
-    -- Check repository DOI
-    print("Repository DOI value:", meta.repository_doi and type(meta.repository_doi[1]) == "table" and meta.repository_doi[1].text or "nil")
-    if meta.repository_doi and type(meta.repository_doi[1]) == "table" and meta.repository_doi[1].text and meta.repository_doi[1].text ~= 'N/A' then
-        meta.include_repository_doi = true
-        print("Including repository DOI")
-    end
+    if meta.draft and meta.draft ~= '' then
+        -- Helper function to check and set field
+        local function check_and_set_field(field_name, include_name)
+            local field = meta[field_name]
+            print(field_name .. " value:", field and type(field[1]) == "table" and field[1].text or "nil")
+            
+            if field and type(field[1]) == "table" and field[1].text and field[1].text ~= 'N/A' then
+                meta[include_name] = true
+                print("Including " .. field_name)
+            end
+        end
 
-    -- Check data DOI
-    print("Data DOI value:", meta.data_doi and type(meta.data_doi[1]) == "table" and meta.data_doi[1].text or "nil")
-    if meta.data_doi and type(meta.data_doi[1]) == "table" and meta.data_doi[1].text and meta.data_doi[1].text ~= 'N/A' then
-        meta.include_data_doi = true
-        print("Including data DOI")
+        -- Check all fields
+        check_and_set_field("repository_doi", "include_repository_doi")
+        check_and_set_field("data_doi", "include_data_doi")
+        check_and_set_field("book_doi", "include_book_doi")
+        check_and_set_field("docker_doi", "include_docker_doi")
+        check_and_set_field("software_review_url", "include_software_review")
+        check_and_set_field("book_exec_url", "include_book_exec")
+    else    
+        meta.include_repository_doi = false
+        meta.include_data_doi = false
+        meta.include_book_doi = false
+        meta.include_docker_doi = false
+        meta.include_software_review = false
+        meta.include_book_exec = false
     end
-
-    -- Check book DOI
-    print("Book DOI value:", meta.book_doi and type(meta.book_doi[1]) == "table" and meta.book_doi[1].text or "nil")
-    if meta.book_doi and type(meta.book_doi[1]) == "table" and meta.book_doi[1].text and meta.book_doi[1].text ~= 'N/A' then
-        meta.include_book_doi = true
-        print("Including book DOI")
-    end
-
-    -- Check docker DOI
-    print("Docker DOI value:", meta.docker_doi and type(meta.docker_doi[1]) == "table" and meta.docker_doi[1].text or "nil")
-    if meta.docker_doi and type(meta.docker_doi[1]) == "table" and meta.docker_doi[1].text and meta.docker_doi[1].text ~= 'N/A' then
-        meta.include_docker_doi = true
-        print("Including docker DOI")
-    end
-
-    -- Check software review URL
-    print("Software review URL value:", meta.software_review_url and type(meta.software_review_url[1]) == "table" and meta.software_review_url[1].text or "nil")
-    if meta.software_review_url and type(meta.software_review_url[1]) == "table" and meta.software_review_url[1].text and meta.software_review_url[1].text ~= 'N/A' then
-        meta.include_software_review = true
-        print("Including software review")
-    end
-
-    -- Check book exec URL
-    print("Book exec URL value:", meta.book_exec_url and type(meta.book_exec_url[1]) == "table" and meta.book_exec_url[1].text or "nil")
-    if meta.book_exec_url and type(meta.book_exec_url[1]) == "table" and meta.book_exec_url[1].text and meta.book_exec_url[1].text ~= 'N/A' then
-        meta.include_book_exec = true
-        print("Including book exec")
-    end
-
     return meta
 end
