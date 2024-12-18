@@ -1,5 +1,13 @@
 function Meta(meta)
     if meta.draft and meta.draft ~= '' then
+        meta.include_repository_doi = true
+        meta.include_data_doi = true
+        meta.include_book_doi = true
+        meta.include_docker_doi = true
+        meta.include_software_review = true
+        meta.include_book_exec = true
+    else    
+
         -- Helper function to check and set field
         local function check_and_set_field(field_name, include_name)
             local field = meta[field_name]
@@ -18,13 +26,6 @@ function Meta(meta)
         check_and_set_field("docker_doi", "include_docker_doi")
         check_and_set_field("software_review_url", "include_software_review")
         check_and_set_field("book_exec_url", "include_book_exec")
-    else    
-        meta.include_repository_doi = false
-        meta.include_data_doi = false
-        meta.include_book_doi = false
-        meta.include_docker_doi = false
-        meta.include_software_review = false
-        meta.include_book_exec = false
     end
     return meta
 end
