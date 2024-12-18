@@ -1,5 +1,6 @@
 function Meta(meta)
     if meta.draft and meta.draft ~= '' then
+        print("Draft mode, skipping conditional archive rules.")
         meta.include_repository_doi = true
         meta.include_data_doi = true
         meta.include_book_doi = true
