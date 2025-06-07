@@ -1,3 +1,4 @@
+from: markdown+fenced_divs
 to: latex
 pdf-engine: latexmk
 pdf-engine-opt: -lualatex
