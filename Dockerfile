@@ -4,7 +4,8 @@ RUN apk add --no-cache ttf-hack;
 
 
 # Install additional LaTeX packages
-RUN tlmgr update --self && tlmgr install \
+RUN tlmgr option repository http://mirror.ctan.org/systems/texlive/tlnet/2024 && \ 
+  tlmgr update --self && tlmgr install \
   algorithmicx \
   algorithms \
   booktabs \
