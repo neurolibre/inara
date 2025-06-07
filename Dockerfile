@@ -1,8 +1,7 @@
-FROM pandoc/latex:3.1.13-alpine
+FROM FROM pandoc/latex:3.2.0-alpine
 
-RUN apk add --no-cache ttf-hack; \
-    addgroup -g 100 users; \
-    adduser -u 1000 -G users -D ubuntu
+RUN apk add --no-cache ttf-hack;
+
 
 # Install additional LaTeX packages
 RUN tlmgr update --self && tlmgr install \
