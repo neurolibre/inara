@@ -4,9 +4,8 @@ RUN apk add --no-cache ttf-hack;
 
 
 # Install additional LaTeX packages
-RUN curl -sSL https://mirror.ctan.org/systems/texlive/tlnet/update-tlmgr-latest.sh -o update-tlmgr-latest.sh && \
-  chmod +x update-tlmgr-latest.sh && \
-  ./update-tlmgr-latest.sh && \
+RUN tlmgr option repository http://ftp.math.utah.edu/pub/tex/historic/systems/texlive/2024/tlnet-final && \
+   tlmgr update --self && \
   tlmgr install \
   algorithmicx \
   algorithms \
