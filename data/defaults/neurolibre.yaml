@@ -14,6 +14,8 @@ filters:
     path: neurolibre-handle-crowd.lua
   - type: lua
     path: conditional-archives.lua
+  - type: lua
+    path: figure-box.lua
 
 variables:
   # styling options
