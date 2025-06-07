@@ -37,7 +37,8 @@ RUN tlmgr option repository http://ftp.math.utah.edu/pub/tex/historic/systems/te
   xkeyval \
   xstring \
   fontawesome5 \
-  awesomebox
+  awesomebox \
+  hyperxmp
 
 
 ENV OSFONTDIR=/usr/share/fonts
