@@ -49,6 +49,9 @@ function Meta(meta)
                     value = field[1].text
                 elseif type(field) == "table" and field.text then
                     value = field.text
+                elseif type(field) == "table" and field[1] then
+                    -- Handle Pandoc Str objects
+                    value = pandoc.utils.stringify(field[1])
                 end
             end
             
