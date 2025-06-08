@@ -12,11 +12,54 @@ function Meta(meta)
         -- Helper function to check and set field
         local function check_and_set_field(field_name, include_name)
             local field = meta[field_name]
-            print(field_name .. " value:", field and type(field[1]) == "table" and field[1].text or "nil")
             
-            if field and type(field[1]) == "table" and field[1].text and field[1].text ~= 'N/A' then
+            -- Debug: Print detailed information about the field
+            print("=== DEBUG: " .. field_name .. " ===")
+            print("Field exists:", field ~= nil)
+            
+            if field then
+                print("Field type:", type(field))
+                
+                if type(field) == "table" then
+                    print("Field is table with length:", #field)
+                    for i, v in pairs(field) do
+                        print("  Index " .. tostring(i) .. ":", type(v), v)
+                        if type(v) == "table" and v.text then
+                            print("    v.text:", v.text)
+                        end
+                    end
+                elseif type(field) == "string" then
+                    print("Field string value:", field)
+                else
+                    print("Field value:", tostring(field))
+                end
+            else
+                print("Field is nil")
+            end
+            
+            -- Original condition check
+            print("Original condition result:", field and type(field[1]) == "table" and field[1].text and field[1].text ~= 'N/A')
+            
+            -- Try alternative access patterns
+            local value = nil
+            if field then
+                if type(field) == "string" then
+                    value = field
+                elseif type(field) == "table" and field[1] and type(field[1]) == "table" and field[1].text then
+                    value = field[1].text
+                elseif type(field) == "table" and field.text then
+                    value = field.text
+                end
+            end
+            
+            print("Extracted value:", value)
+            print("========================")
+            
+            if value and value ~= 'N/A' and value ~= '' then
                 meta[include_name] = true
                 print("Including " .. field_name)
+            else
+                print("NOT including " .. field_name .. " (value: " .. tostring(value) .. ")")
             end
         end
 
