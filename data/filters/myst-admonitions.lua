@@ -1,77 +1,76 @@
--- Generalized filter for MyST markdown admonitions
--- Define admonition types and their LaTeX styling
+-- Define styles for known admonition types
 local admonition_styles = {
     figure = {
         color = "red!5!white",
         frame = "red!75!black",
         title = "Figure placeholder",
-        use_special_content = true -- Special flag for figures
+        use_special_content = true
     },
     note = {
         color = "blue!5!white",
-        frame = "blue!75!black", 
-        title = "Note",
-        use_special_content = false
+        frame = "blue!75!black",
+        title = "Note"
     },
     warning = {
         color = "orange!5!white",
         frame = "orange!75!black",
-        title = "Warning", 
-        use_special_content = false
+        title = "Warning"
     },
     tip = {
         color = "green!5!white",
         frame = "green!75!black",
-        title = "Tip",
-        use_special_content = false
+        title = "Tip"
     },
     error = {
         color = "red!10!white",
         frame = "red!50!black",
-        title = "Error",
-        use_special_content = false
+        title = "Error"
     }
 }
 
--- Extracts the :label: value and returns cleaned content
-function extract_label_and_content(content_blocks)
-    local label = nil
-    local cleaned_lines = {}
-
-    for _, block in ipairs(content_blocks) do
-        local lines = pandoc.utils.stringify(block):split("\n")
-        for _, line in ipairs(lines) do
-            local found_label = line:match("^%s*:label:%s*(.+)%s*$")
-            if found_label then
-                label = found_label
-            else
-                table.insert(cleaned_lines, line)
-            end
-        end
-    end
-
-    return label, table.concat(cleaned_lines, "\n")
+-- Utility: check if a string looks like a path to an image
+local function is_image_path(str)
+    return str and str:match("^[%w%./_-]+%.[pjgsvgPJGSVC]+$")
 end
 
--- Function to process an admonition block
-function process_admonition(admonition_type, content_blocks, article_doi)
+-- Utility: extract the :label: value from content lines
+local function extract_label(lines)
+    for i, line in ipairs(lines) do
+        local label = line:match("^%s*:label:%s*(%S+)")
+        if label then
+            table.remove(lines, i)
+            return label
+        end
+    end
+    return nil
+end
+
+-- Build LaTeX output for a figure path
+local function render_image_figure(path, caption, label)
+    local latex = "\\begin{figure}[htbp]\n\\centering\n"
+    latex = latex .. "\\includegraphics[width=\\linewidth]{" .. path .. "}\n"
+    if caption and caption ~= "" then
+        latex = latex .. "\\caption{" .. caption .. "}\n"
+    end
+    if label and label ~= "" then
+        latex = latex .. "\\label{" .. label .. "}\n"
+    end
+    latex = latex .. "\\end{figure}"
+    return latex
+end
+
+-- Build LaTeX output for a tcolorbox-based admonition
+local function render_tcolorbox(admonition_type, label, content_lines, article_doi)
     local style = admonition_styles[admonition_type] or {
         color = "gray!5!white",
         frame = "gray!75!black",
-        title = admonition_type:gsub("^%l", string.upper),
-        use_special_content = false
+        title = admonition_type:gsub("^%l", string.upper)
     }
 
-    local label, content = extract_label_and_content(content_blocks)
-
-    local full_content = content
-    if style.use_special_content and article_doi and article_doi ~= "" then
-        local doi_message = "Please see \\href{https://preprint.neurolibre.org/" .. article_doi .. "}{the living preprint} to interact with this figure."
-        if content and content ~= "" then
-            full_content = doi_message .. "\n\n\\vspace{1em}\n\n" .. content
-        else
-            full_content = doi_message
-        end
+    local content = table.concat(content_lines, "\n")
+    if style.use_special_content and admonition_type == "figure" then
+        content = "Please see \\href{https://preprint.neurolibre.org/" .. article_doi ..
+                  "}{the living preprint} to interact with this figure.\n\n\\vspace{1em}\n\n" .. content
     end
 
     local latex = "\\begin{tcolorbox}[colback=" .. style.color .. ",colframe=" .. style.frame
@@ -80,17 +79,15 @@ function process_admonition(admonition_type, content_blocks, article_doi)
     else
         latex = latex .. ",title=" .. style.title
     end
-
-    latex = latex .. "]\n" .. full_content .. "\n\\end{tcolorbox}"
+    latex = latex .. "]\n" .. content .. "\n\\end{tcolorbox}"
     return latex
 end
 
--- Main document processing function
+-- Main Pandoc filter
 function Pandoc(doc)
     local newblocks = {}
     local i = 1
 
-    -- Get article DOI from metadata
     local article_doi = ""
     if doc.meta.article and doc.meta.article.doi then
         article_doi = pandoc.utils.stringify(doc.meta.article.doi)
@@ -100,42 +97,44 @@ function Pandoc(doc)
         local block = doc.blocks[i]
         local blocktext = pandoc.utils.stringify(block)
 
-        -- Check for admonition pattern :::{type}
-        local admonition_type = blocktext:match("^:::{([%w%-_]+)}")
-
+        local admonition_type, raw_arg = blocktext:match("^:::{([%w%-_]+)}%s*([%S]*)")
         if admonition_type then
-            local content_blocks = {}
             i = i + 1
-
+            local content_lines = {}
             while i <= #doc.blocks do
-                local content_block = doc.blocks[i]
-                local content_text = pandoc.utils.stringify(content_block)
-
-                if content_text:match("^:::%s*$") then
+                local line = pandoc.utils.stringify(doc.blocks[i])
+                if line:match("^:::%s*$") then
                     break
                 else
-                    table.insert(content_blocks, content_block)
+                    table.insert(content_lines, line)
                 end
                 i = i + 1
             end
 
-            local latex = process_admonition(admonition_type, content_blocks, article_doi)
-            table.insert(newblocks, pandoc.RawBlock("latex", latex))
+            -- Extract label (e.g., from :label: fig1)
+            local label = extract_label(content_lines)
+
+            -- Handle figure type separately
+            if admonition_type == "figure" then
+                if is_image_path(raw_arg) then
+                    local caption = table.concat(content_lines, "\n")
+                    local latex = render_image_figure(raw_arg, caption, label)
+                    table.insert(newblocks, pandoc.RawBlock("latex", latex))
+                else
+                    -- Ignore #id style fallback completely, per user instruction
+                    local latex = render_tcolorbox("figure", label, content_lines, article_doi)
+                    table.insert(newblocks, pandoc.RawBlock("latex", latex))
+                end
+            else
+                local latex = render_tcolorbox(admonition_type, label, content_lines, article_doi)
+                table.insert(newblocks, pandoc.RawBlock("latex", latex))
+            end
         else
             table.insert(newblocks, block)
         end
-
         i = i + 1
     end
 
     doc.blocks = newblocks
     return doc
-end
-
--- Helper to split string
-function string:split(sep)
-    local fields = {}
-    local pattern = string.format("([^%s]+)", sep)
-    self:gsub(pattern, function(c) fields[#fields + 1] = c end)
-    return fields
 end
