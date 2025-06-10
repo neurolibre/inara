@@ -1,79 +1,174 @@
-local utils = require 'pandoc.utils'
-
--- Style for 'figure' box
-local figure_style = {
-  color = "red!5!white",
-  frame = "red!75!black",
-  title = "Figure placeholder"
+local admonition_styles = {
+    figure = {
+        color = "red!5!white",
+        frame = "red!75!black",
+        title = "Figure placeholder",
+        use_special_content = true
+    },
+    note = {
+        color = "blue!5!white",
+        frame = "blue!75!black",
+        title = "Note",
+        use_special_content = false
+    },
+    warning = {
+        color = "orange!5!white",
+        frame = "orange!75!black",
+        title = "Warning",
+        use_special_content = false
+    },
+    tip = {
+        color = "green!5!white",
+        frame = "green!75!black",
+        title = "Tip",
+        use_special_content = false
+    },
+    error = {
+        color = "red!10!white",
+        frame = "red!50!black",
+        title = "Error",
+        use_special_content = false
+    }
 }
 
--- Determine if a string looks like a file path
-local function is_image_path(str)
-  return str and str:match("^.+%.[pjgsvgPJGSVC]+$")
+-- Utility: check if a string looks like an image path (has a slash or image extension)
+local function is_image_path(s)
+    if s:match("[/\\]") then
+        return true
+    end
+    -- common image extensions (case insensitive)
+    local ext = s:match("%.([a-zA-Z0-9]+)$")
+    if ext then
+        ext = ext:lower()
+        local image_exts = { "png", "jpg", "jpeg", "pdf", "eps", "svg" }
+        for _, v in ipairs(image_exts) do
+            if ext == v then return true end
+        end
+    end
+    return false
 end
 
--- Render a LaTeX figure block
-local function render_image_figure(path, caption, label)
-  local latex = "\\begin{figure}[htbp]\n\\centering\n"
-  latex = latex .. "\\includegraphics[width=\\linewidth]{" .. path .. "}\n"
-  if caption ~= "" then
-    latex = latex .. "\\caption{" .. caption .. "}\n"
-  end
-  if label and label ~= "" then
-    latex = latex .. "\\label{" .. label .. "}\n"
-  end
-  latex = latex .. "\\end{figure}"
-  return latex
+function process_admonition(admonition_type, argument, label, content_blocks, article_doi)
+    local style = admonition_styles[admonition_type] or {
+        color = "gray!5!white",
+        frame = "gray!75!black",
+        title = admonition_type:gsub("^%l", string.upper),
+        use_special_content = false
+    }
+    
+    -- Flatten content blocks into LaTeX string
+    local content = table.concat(content_blocks, "\n\n")
+
+    -- Handle figure with image path argument: render figure with image and caption
+    if admonition_type == "figure" and argument and is_image_path(argument) then
+        -- caption is content, label if present
+        local latex = "\\begin{figure}[htbp]\n\\centering\n"
+        latex = latex .. "\\includegraphics[width=\\linewidth]{" .. argument .. "}\n"
+        if content ~= "" then
+            latex = latex .. "\\caption{" .. content .. "}\n"
+        end
+        if label and label ~= "" then
+            latex = latex .. "\\label{" .. label .. "}\n"
+        end
+        latex = latex .. "\\end{figure}"
+        return latex
+    end
+
+    -- For figures without image path, render tcolorbox with DOI link + content
+    if admonition_type == "figure" then
+        local latex = "\\begin{tcolorbox}[colback=" .. style.color .. ",colframe=" .. style.frame
+        if label and label ~= "" then
+            latex = latex .. ",title=" .. style.title .. " \\label{" .. label .. "}"
+        else
+            latex = latex .. ",title=" .. style.title
+        end
+        latex = latex .. "]\n"
+        latex = latex .. "Please see \\href{https://preprint.neurolibre.org/" .. article_doi .. "}{the living preprint} to interact with this figure.\n\n"
+        if content ~= "" then
+            latex = latex .. "\\vspace{1em}\n" .. content .. "\n"
+        end
+        latex = latex .. "\\end{tcolorbox}"
+        return latex
+    end
+
+    -- Other admonitions: simple tcolorbox with content and optional label in title
+    local latex = "\\begin{tcolorbox}[colback=" .. style.color .. ",colframe=" .. style.frame
+    if label and label ~= "" then
+        latex = latex .. ",title=" .. style.title .. " \\label{" .. label .. "}"
+    else
+        latex = latex .. ",title=" .. style.title
+    end
+    latex = latex .. "]\n" .. content .. "\n\\end{tcolorbox}"
+
+    return latex
 end
 
--- Render a tcolorbox
-local function render_tcolorbox(content_blocks, label, doi)
-  local header = "\\begin{tcolorbox}[colback=" .. figure_style.color ..
-                 ",colframe=" .. figure_style.frame ..
-                 ",title=" .. figure_style.title
+function Pandoc(doc)
+    local newblocks = {}
+    local i = 1
 
-  if label and label ~= "" then
-    header = header .. " \\label{" .. label .. "}"
-  end
-  header = header .. "]\n"
+    -- Get article DOI from metadata
+    local article_doi = ""
+    if doc.meta.article and doc.meta.article.doi then
+        article_doi = pandoc.utils.stringify(doc.meta.article.doi)
+    end
 
-  local preamble = "Please see \\href{https://preprint.neurolibre.org/" .. doi ..
-                   "}{the living preprint} to interact with this figure.\n\n\\vspace{1em}\n\n"
+    while i <= #doc.blocks do
+        local block = doc.blocks[i]
+        local blocktext = pandoc.utils.stringify(block)
 
-  local body = pandoc.write(pandoc.Pandoc(content_blocks), "latex")
-  local footer = "\\end{tcolorbox}"
+        -- Match opening fence: :::type [argument] (argument can be empty)
+        local admonition_type, argument = blocktext:match("^:::%s*([%w%-_]+)%s*(.-)%s*$")
 
-  return header .. preamble .. body .. "\n" .. footer
-end
+        if admonition_type then
+            -- Collect attributes lines like :label: ...
+            local label = ""
 
--- Main Div handler
-function Div(el)
-  if not el.classes:includes("figure") then
-    return nil
-  end
+            -- We'll collect content blocks between the opening ::: and closing :::
 
-  local raw_input = el.attributes[""] or ""
-  local label = el.attributes["label"] or ""
-  local doi = "10.xxxxxx/draft"
+            local content_blocks = {}
 
-  if PANDOC_DOCUMENT and PANDOC_DOCUMENT.meta.article and PANDOC_DOCUMENT.meta.article.doi then
-    doi = utils.stringify(PANDOC_DOCUMENT.meta.article.doi)
-  end
+            -- Move to next block (skip opening fence)
+            i = i + 1
 
-  -- Ignore values like '#fig1cell'
-  if raw_input:match("^#") then
-    raw_input = ""
-  end
-  if label:match("^#") then
-    label = ""
-  end
+            -- Collect lines starting with :label: and remove them from content_blocks
+            local attr_lines = {}
 
-  -- Handle as image figure
-  if is_image_path(raw_input) then
-    local caption = pandoc.utils.stringify(el.content)
-    return pandoc.RawBlock("latex", render_image_figure(raw_input, caption, label))
-  end
+            -- Collect content lines, and detect attribute lines at the beginning
+            while i <= #doc.blocks do
+                local b = doc.blocks[i]
+                local text = pandoc.utils.stringify(b)
 
-  -- Handle as figure box with blocks
-  return pandoc.RawBlock("latex", render_tcolorbox(el.content, label, doi))
+                if text:match("^:::%s*$") then
+                    -- Closing fence found, end
+                    break
+                elseif text:match("^:label:%s*(%S+)") then
+                    label = text:match("^:label:%s*(%S+)")
+                    -- skip adding this line to content
+                else
+                    table.insert(content_blocks, text)
+                end
+
+                i = i + 1
+            end
+
+            -- Sanity: if label is empty or whitespace only, clear it
+            if label then
+                label = label:gsub("^%s*(.-)%s*$", "%1")
+                if label == "" then label = nil end
+            end
+
+            -- Process the admonition
+            local latex = process_admonition(admonition_type, argument, label, content_blocks, article_doi)
+            table.insert(newblocks, pandoc.RawBlock("latex", latex))
+        else
+            -- Not an admonition block, keep as is
+            table.insert(newblocks, block)
+        end
+
+        i = i + 1
+    end
+
+    doc.blocks = newblocks
+    return doc
 end
