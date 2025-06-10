@@ -50,7 +50,7 @@ function process_admonition(admonition_type, admonition_id, content_blocks, arti
     local content
     if style.use_special_content and admonition_type == "figure" then
         -- Special case for figures: use DOI link message
-        content = "Please see \\href{https://preprint.neurolibre.org/" .. article_doi .. "}{the living preprint} to interact with this figure."
+        content = "Please see \\href{https://preprint.neurolibre.org/" .. article_doi .. "}{the living preprint} to interact with this figure.\n\n" .. table.concat(content_blocks, "\n")
     else
         -- All other admonitions: use their actual content
         content = table.concat(content_blocks, "\n")
@@ -79,12 +79,15 @@ function Pandoc(doc)
         article_doi = pandoc.utils.stringify(doc.meta.article.doi)
     end
     
+    -- Iterate through each block in the document
+    -- doc.blocks contains all blocks/elements in the document
+    -- A block could be a paragraph, header, code block, etc.
     while i <= #doc.blocks do
         local block = doc.blocks[i]
         local blocktext = pandoc.utils.stringify(block)
         
-        -- Check for any admonition pattern :::{type}
-        local admonition_type = blocktext:match("^:::{([%w%-_]+)}")
+        -- Check for any admonition pattern :::{type} or ::: {type} 
+        local admonition_type = blocktext:match("^:::%s*{([%w%-_]+)}")
         local admonition_id = ""
         if admonition_type then
             -- This block starts an admonition, collect all blocks until we find closing :::
@@ -101,8 +104,8 @@ function Pandoc(doc)
                 if content_text:match("^:::%s*$") then
                     -- Found closing :::, stop collecting
                     break
-                elseif content_text:match("^:label:%s*(.+)%s*$") then
-                    admonition_id = content_text:match("^:label:%s*(.+)%s*$")
+                elseif content_text:match("^:label:%s*(.+)$") then
+                    admonition_id = content_text:match("^:label:%s*(.+)$")
                 else
                     -- Add this block's content
                     table.insert(content_blocks, content_text)
