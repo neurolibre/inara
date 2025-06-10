@@ -52,11 +52,11 @@ function process_admonition(admonition_type, admonition_id, content_blocks, arti
     
     if admonition_type == "figure" then
         for _, content in ipairs(content_blocks) do
-            -- Check for :label: directive
-            local label_match = content:match("^:label:%s*(.+)%s*$")
-            if label_match then
+            -- Check for :label: directive (with more flexible matching)
+            local label_match = content:match("^%s*:label:%s*(.-)%s*$")
+            if label_match and label_match ~= "" then
                 -- Found a label directive, use it as the ID
-                label_id = label_match:gsub("%s+", "") -- Remove any whitespace
+                label_id = label_match
             else
                 -- Not a label directive, keep as content
                 table.insert(actual_content_blocks, content)
@@ -119,6 +119,7 @@ function Pandoc(doc)
         if admonition_type then
             -- This block starts an admonition, collect all blocks until we find closing :::
             local content_blocks = {}
+            local found_closing = false
             
             -- Skip the opening :::{type} line
             i = i + 1
@@ -128,19 +129,30 @@ function Pandoc(doc)
                 local content_block = doc.blocks[i]
                 local content_text = pandoc.utils.stringify(content_block)
                 
-                if content_text:match("^:::%s*$") then
+                -- Check if this is the closing ::: (must be exact match)
+                if content_text == ":::" then
                     -- Found closing :::, stop collecting
+                    found_closing = true
                     break
                 else
-                    -- Add this block's content
-                    table.insert(content_blocks, content_text)
+                    -- Add this block's content (skip empty lines at the start)
+                    if content_text ~= "" or #content_blocks > 0 then
+                        table.insert(content_blocks, content_text)
+                    end
                 end
                 i = i + 1
             end
             
-            -- Process the admonition
-            local latex = process_admonition(admonition_type, admonition_id, content_blocks, article_doi)
-            table.insert(newblocks, pandoc.RawBlock("latex", latex))
+            -- Only process if we found the closing :::
+            if found_closing then
+                -- Process the admonition
+                local latex = process_admonition(admonition_type, admonition_id, content_blocks, article_doi)
+                table.insert(newblocks, pandoc.RawBlock("latex", latex))
+            else
+                -- No closing found, treat as regular content
+                table.insert(newblocks, block)
+                i = i - (#content_blocks) -- Reset position
+            end
         else
             -- Not an admonition block, keep as is
             table.insert(newblocks, block)
