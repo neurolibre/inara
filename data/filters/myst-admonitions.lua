@@ -1,76 +1,124 @@
-local article_doi = "10.xxxxxx/draft"
-
-local styles = {
-  figure = { color = "red!5!white", frame = "red!75!black", title = "Figure placeholder" },
-  note =   { color = "blue!5!white", frame = "blue!75!black", title = "Note" },
-  tip =    { color = "green!5!white", frame = "green!75!black", title = "Tip" },
-  warning ={ color = "orange!5!white", frame = "orange!75!black", title = "Warning" },
-  error =  { color = "red!10!white", frame = "red!50!black", title = "Error" }
+-- Generalized filter for MyST markdown admonitions
+-- Define admonition types and their LaTeX styling
+local admonition_styles = {
+    figure = {
+        color = "red!5!white",
+        frame = "red!75!black",
+        title = "Figure placeholder",
+        use_special_content = true -- Special flag for figures
+    },
+    note = {
+        color = "blue!5!white",
+        frame = "blue!75!black", 
+        title = "Note",
+        use_special_content = false
+    },
+    warning = {
+        color = "orange!5!white",
+        frame = "orange!75!black",
+        title = "Warning", 
+        use_special_content = false
+    },
+    tip = {
+        color = "green!5!white",
+        frame = "green!75!black",
+        title = "Tip",
+        use_special_content = false
+    },
+    error = {
+        color = "red!10!white",
+        frame = "red!50!black",
+        title = "Error",
+        use_special_content = false
+    }
 }
 
-function RawBlock(el)
-  if el.format ~= "markdown" then return nil end
-
-  local blocks = {}
-  local lines = {}
-  for line in el.text:gmatch("[^\r\n]*\r?\n?") do
-    table.insert(lines, line)
-  end
-
-  local i = 1
-  while i <= #lines do
-    local line = lines[i]
-    local open_type, id = line:match("^:::%{([%w%-_]+)%}%s*#?([%S]*)")
-    if open_type then
-      local style = styles[open_type] or {
-        color = "gray!5!white", frame = "gray!75!black", title = open_type
-      }
-
-      local label = nil
-      local content_lines = {}
-      i = i + 1
-
-      while i <= #lines do
-        local l = lines[i]
-        if l:match("^:::%s*$") then
-          break
-        elseif l:match("^%s*:label:%s*") then
-          label = l:match("^%s*:label:%s*(.+)%s*")
-        else
-          table.insert(content_lines, l)
-        end
-        i = i + 1
-      end
-
-      local body = table.concat(content_lines, "")
-      local box = ""
-
-      -- Handle figure with optional image path in ID
-      if open_type == "figure" and id:match("^.+%.[a-zA-Z]+$") then
-        box = string.format("\\begin{figure}[ht]\n\\centering\n\\includegraphics[width=0.9\\textwidth]{%s}", id)
-        if label then box = box .. string.format("\n\\label{%s}", label) end
-        if body:match("%S") then box = box .. "\n" .. body end
-        box = box .. "\n\\end{figure}"
-      else
-        box = string.format(
-          "\\begin{tcolorbox}[colback=%s,colframe=%s,title=%s%s]\n",
-          style.color, style.frame, style.title,
-          label and (" \\label{" .. label .. "}") or ""
-        )
-
-        if open_type == "figure" then
-          box = box .. string.format("Please see \\href{https://preprint.neurolibre.org/%s}{the living preprint} to interact with this figure.\n\n\\vspace{1em}\n\n", article_doi)
-        end
-
-        box = box .. body .. "\n\\end{tcolorbox>"
-      end
-
-      table.insert(blocks, pandoc.RawBlock("latex", box))
-    else
-      table.insert(blocks, pandoc.RawBlock("markdown", line))
+-- Function to process an admonition block
+function process_admonition(admonition_type, admonition_id, content_blocks, article_doi)
+    local style = admonition_styles[admonition_type]
+    if not style then
+        -- Unknown admonition type, use default styling
+        style = {
+            color = "gray!5!white",
+            frame = "gray!75!black",
+            title = admonition_type:gsub("^%l", string.upper), -- Capitalize first letter
+            use_special_content = false
+        }
     end
-    i = i + 1
-  end
+    
+    -- Determine content based on admonition type
+    local content
+    if style.use_special_content and admonition_type == "figure" then
+        -- Special case for figures: use DOI link message
+        content = "Please see \\href{https://preprint.neurolibre.org/" .. article_doi .. "}{the living preprint} to interact with this figure."
+    else
+        -- All other admonitions: use their actual content
+        content = table.concat(content_blocks, "\n")
+    end
+    
+    local latex = "\\begin{tcolorbox}[colback=" .. style.color .. ",colframe=" .. style.frame
+    
+    if admonition_id and admonition_id ~= "" then
+        latex = latex .. ",title=" .. style.title .. " \\label{" .. admonition_id .. "}"
+    else
+        latex = latex .. ",title=" .. style.title
+    end
+    
+    latex = latex .. "]\n" .. content .. "\n\\end{tcolorbox}"
+    return latex
+end
 
-  return blocks
+-- Main document processing function
+function Pandoc(doc)
+    local newblocks = {}
+    local i = 1
+    
+    -- Get article DOI from metadata
+    local article_doi = ""
+    if doc.meta.article and doc.meta.article.doi then
+        article_doi = pandoc.utils.stringify(doc.meta.article.doi)
+    end
+    
+    while i <= #doc.blocks do
+        local block = doc.blocks[i]
+        local blocktext = pandoc.utils.stringify(block)
+        
+        -- Check for any admonition pattern :::{type}
+        local admonition_type, admonition_id = blocktext:match("^:::{([%w%-_]+)}%s*#?([%w%-_]*)")
+        
+        if admonition_type then
+            -- This block starts an admonition, collect all blocks until we find closing :::
+            local content_blocks = {}
+            
+            -- Skip the opening :::{type} line
+            i = i + 1
+            
+            -- Collect content blocks until we find closing :::
+            while i <= #doc.blocks do
+                local content_block = doc.blocks[i]
+                local content_text = pandoc.utils.stringify(content_block)
+                
+                if content_text:match("^:::%s*$") then
+                    -- Found closing :::, stop collecting
+                    break
+                else
+                    -- Add this block's content
+                    table.insert(content_blocks, content_text)
+                end
+                i = i + 1
+            end
+            
+            -- Process the admonition
+            local latex = process_admonition(admonition_type, admonition_id, content_blocks, article_doi)
+            table.insert(newblocks, pandoc.RawBlock("latex", latex))
+        else
+            -- Not an admonition block, keep as is
+            table.insert(newblocks, block)
+        end
+        
+        i = i + 1
+    end
+    
+    doc.blocks = newblocks
+    return doc
 end
