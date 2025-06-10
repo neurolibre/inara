@@ -1,12 +1,10 @@
 local utils = require 'pandoc.utils'
 
--- Map of styles for admonitions
-local admonition_styles = {
-  figure = {
-    color = "red!5!white",
-    frame = "red!75!black",
-    title = "Figure placeholder"
-  }
+-- Style for 'figure' box
+local figure_style = {
+  color = "red!5!white",
+  frame = "red!75!black",
+  title = "Figure placeholder"
 }
 
 -- Determine if a string looks like a file path
@@ -28,53 +26,54 @@ local function render_image_figure(path, caption, label)
   return latex
 end
 
--- Render a LaTeX tcolorbox block
-local function render_tcolorbox(content, label, doi)
-  local style = admonition_styles["figure"]
-  local box = "\\begin{tcolorbox}[colback=" .. style.color ..
-              ",colframe=" .. style.frame ..
-              ",title=" .. style.title
+-- Render a tcolorbox
+local function render_tcolorbox(content_blocks, label, doi)
+  local header = "\\begin{tcolorbox}[colback=" .. figure_style.color ..
+                 ",colframe=" .. figure_style.frame ..
+                 ",title=" .. figure_style.title
 
   if label and label ~= "" then
-    box = box .. " \\label{" .. label .. "}"
+    header = header .. " \\label{" .. label .. "}"
   end
-  box = box .. "]\n"
+  header = header .. "]\n"
 
-  box = box .. "Please see \\href{https://preprint.neurolibre.org/" ..
-         doi .. "}{the living preprint} to interact with this figure.\n\n\\vspace{1em}\n\n"
+  local preamble = "Please see \\href{https://preprint.neurolibre.org/" .. doi ..
+                   "}{the living preprint} to interact with this figure.\n\n\\vspace{1em}\n\n"
 
-  box = box .. content .. "\n\\end{tcolorbox}"
-  return box
+  local body = pandoc.write(pandoc.Pandoc(content_blocks), "latex")
+  local footer = "\\end{tcolorbox}"
+
+  return header .. preamble .. body .. "\n" .. footer
 end
 
--- Handle Divs (e.g., ::: {figure})
+-- Main Div handler
 function Div(el)
   if not el.classes:includes("figure") then
     return nil
   end
 
-  local path = el.attributes[""] or ""
-  if path:match("^#") then
-    path = ""
-  end
+  local raw_input = el.attributes[""] or ""
+  local label = el.attributes["label"] or ""
+  local doi = "10.xxxxxx/draft"
 
-  local label = el.attributes["label"] or el.identifier or ""
-  if label:match("^#") then
-    label = "" -- sanitize invalid fallback labels
-  end
-
-  -- Extract plain text for caption (flatten blocks)
-  local caption = pandoc.write(pandoc.Pandoc(el.content), "plain"):gsub("\n", " ")
-
-  local doi = ""
   if PANDOC_DOCUMENT and PANDOC_DOCUMENT.meta.article and PANDOC_DOCUMENT.meta.article.doi then
     doi = utils.stringify(PANDOC_DOCUMENT.meta.article.doi)
   end
 
-  if is_image_path(path) then
-    return pandoc.RawBlock("latex", render_image_figure(path, caption, label))
-  else
-    local latex_content = pandoc.write(pandoc.Pandoc(el.content), "latex")
-    return pandoc.RawBlock("latex", render_tcolorbox(latex_content, label, doi))
+  -- Ignore values like '#fig1cell'
+  if raw_input:match("^#") then
+    raw_input = ""
   end
+  if label:match("^#") then
+    label = ""
+  end
+
+  -- Handle as image figure
+  if is_image_path(raw_input) then
+    local caption = pandoc.utils.stringify(el.content)
+    return pandoc.RawBlock("latex", render_image_figure(raw_input, caption, label))
+  end
+
+  -- Handle as figure box with blocks
+  return pandoc.RawBlock("latex", render_tcolorbox(el.content, label, doi))
 end
