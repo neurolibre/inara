@@ -46,50 +46,20 @@ function process_admonition(admonition_type, admonition_id, content_blocks, arti
         }
     end
     
-    -- For figures, extract label from content and filter out label directives
-    local actual_content_blocks = {}
-    local label_id = admonition_id -- Start with the original ID
-    
-    if admonition_type == "figure" then
-        for _, content in ipairs(content_blocks) do
-            -- Check for :label: directive (with more flexible matching)
-            local label_match = content:match("^%s*:label:%s*(.-)%s*$")
-            if label_match and label_match ~= "" then
-                -- Found a label directive, use it as the ID
-                label_id = label_match
-            else
-                -- Not a label directive, keep as content
-                table.insert(actual_content_blocks, content)
-            end
-        end
-    else
-        -- For non-figure admonitions, use all content as-is
-        actual_content_blocks = content_blocks
-    end
-    
     -- Determine content based on admonition type
     local content
     if style.use_special_content and admonition_type == "figure" then
-        -- Special case for figures: combine user caption with DOI link message
-        local user_content = table.concat(actual_content_blocks, "\n")
-        local special_message = "Please see \\href{https://preprint.neurolibre.org/" .. article_doi .. "}{the living preprint} to interact with this figure."
-        
-        if user_content and user_content ~= "" then
-            -- Combine user caption with special message
-            content = user_content .. "\n\n" .. special_message
-        else
-            -- No user caption, just use special message
-            content = special_message
-        end
+        -- Special case for figures: use DOI link message
+        content = "Please see \\href{https://preprint.neurolibre.org/" .. article_doi .. "}{the living preprint} to interact with this figure."
     else
         -- All other admonitions: use their actual content
-        content = table.concat(actual_content_blocks, "\n")
+        content = table.concat(content_blocks, "\n")
     end
     
     local latex = "\\begin{tcolorbox}[colback=" .. style.color .. ",colframe=" .. style.frame
     
-    if label_id and label_id ~= "" then
-        latex = latex .. ",title=" .. style.title .. " \\label{" .. label_id .. "}"
+    if admonition_id and admonition_id ~= "" then
+        latex = latex .. ",title=" .. style.title .. " \\label{" .. admonition_id .. "}"
     else
         latex = latex .. ",title=" .. style.title
     end
@@ -114,8 +84,8 @@ function Pandoc(doc)
         local blocktext = pandoc.utils.stringify(block)
         
         -- Check for any admonition pattern :::{type}
-        local admonition_type, admonition_id = blocktext:match("^:::{([%w%-_]+)}%s*#?([%w%-_]*)")
-        
+        local admonition_type = blocktext:match("^:::{([%w%-_]+)}")
+        local admonition_id = ""
         if admonition_type then
             -- This block starts an admonition, collect all blocks until we find closing :::
             local content_blocks = {}
@@ -131,6 +101,8 @@ function Pandoc(doc)
                 if content_text:match("^:::%s*$") then
                     -- Found closing :::, stop collecting
                     break
+                elseif content_text:match("^:label:%s*(.+)%s*$") then
+                    admonition_id = content_text:match("^:label:%s*(.+)%s*$")
                 else
                     -- Add this block's content
                     table.insert(content_blocks, content_text)
