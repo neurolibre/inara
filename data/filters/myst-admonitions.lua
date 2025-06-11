@@ -4,7 +4,7 @@ local admonition_styles = {
     figure = {
         color = "red!5!white",
         frame = "red!75!black",
-        title = "🎚️ Interactive content placeholder",
+        title = "ℹ Interactive content placeholder",
         use_special_content = true -- Special flag for figures
     },
     note = {
@@ -206,8 +206,6 @@ function Pandoc(doc)
                 local content_block = doc.blocks[i]
                 local content_text = pandoc.utils.stringify(content_block)
                 
-                print("  Checking content block " .. i .. ": '" .. content_text .. "'")
-                
                 if content_text:match(":::%s*$") then
                     -- Found closing :::, stop collecting
                     print("  Found closing :::, stopping collection")
@@ -223,11 +221,20 @@ function Pandoc(doc)
             
             print("Total content blocks collected: " .. #content_blocks)
             
+            -- Filter out empty strings from content_blocks
+            local filtered_content_blocks = {}
+            for _, block in ipairs(content_blocks) do
+                if block and block:match("%S") then  -- keep only non-empty, non-whitespace
+                    table.insert(filtered_content_blocks, block)
+                end
+            end
+            
             -- Only process if we found the closing fence
             if found_closing then
                 -- Process the admonition
-                local latex = process_admonition(admonition_type, argument_or_label, content_blocks, article_doi)
+                local latex = process_admonition(admonition_type, argument_or_label, filtered_content_blocks, article_doi)
                 table.insert(newblocks, pandoc.RawBlock("latex", latex))
+                i = i + 1 -- Skip the closing fence block
             else
                 -- If no closing fence found, keep the original block and continue
                 table.insert(newblocks, block)
