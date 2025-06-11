@@ -49,9 +49,10 @@ function extract_label_from_content(content_blocks)
     
     for _, block in ipairs(content_blocks) do
         -- Check for :label: pattern - improved regex to handle various formats
-        local extracted_label = block:match(":label:%s*([%w%-_]+)")
+        local extracted_label = block:match("^:label:%s*([%w%-_]+)%s*$")
         if extracted_label then
             label = extracted_label
+            -- Don't add this block to filtered_blocks since it's a label line
         else
             -- Keep this block if it's not a label line
             table.insert(filtered_blocks, block)
