@@ -182,11 +182,18 @@ function Pandoc(doc)
         local block = doc.blocks[i]
         local blocktext = pandoc.utils.stringify(block)
         
+        print("=== MAIN LOOP DEBUG ===")
+        print("Processing block " .. i .. ":")
+        print("Block text: '" .. blocktext .. "'")
+        
         -- Enhanced pattern matching for admonition opening
         -- Handles: :::{type}, :::{type} #label, :::{type} argument
         local admonition_type, argument_or_label = blocktext:match("^:::{([%w%-_]+)}%s*(.*)")
         
         if admonition_type then
+            print("Found admonition type: " .. admonition_type)
+            print("Argument/label: '" .. tostring(argument_or_label) .. "'")
+            
             -- This block starts an admonition, collect all blocks until we find closing :::
             local content_blocks = {}
             local found_closing = false
@@ -199,16 +206,22 @@ function Pandoc(doc)
                 local content_block = doc.blocks[i]
                 local content_text = pandoc.utils.stringify(content_block)
                 
+                print("  Checking content block " .. i .. ": '" .. content_text .. "'")
+                
                 if content_text:match(":::%s*$") then
                     -- Found closing :::, stop collecting
+                    print("  Found closing :::, stopping collection")
                     found_closing = true
                     break
                 else
                     -- Add this block's content
+                    print("  Adding to content blocks: '" .. content_text .. "'")
                     table.insert(content_blocks, content_text)
                 end
                 i = i + 1
             end
+            
+            print("Total content blocks collected: " .. #content_blocks)
             
             -- Only process if we found the closing fence
             if found_closing then
