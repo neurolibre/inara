@@ -47,17 +47,32 @@ function extract_label_from_content(content_blocks)
     local label = nil
     local filtered_blocks = {}
     
-    for _, block in ipairs(content_blocks) do
+    print("=== DEBUG: extract_label_from_content ===")
+    print("Number of content blocks: " .. #content_blocks)
+    
+    for i, block in ipairs(content_blocks) do
+        print("Block " .. i .. ":")
+        print("  Type: " .. type(block))
+        print("  Content: '" .. tostring(block) .. "'")
+        print("  Length: " .. string.len(tostring(block)))
+        
         -- Check for :label: pattern - improved regex to handle various formats
         local extracted_label = block:match("^:label:%s*([%w%-_]+)%s*$")
         if extracted_label then
+            print("  FOUND LABEL: '" .. extracted_label .. "'")
             label = extracted_label
             -- Don't add this block to filtered_blocks since it's a label line
         else
+            print("  No label found, keeping block")
             -- Keep this block if it's not a label line
             table.insert(filtered_blocks, block)
         end
+        print("---")
     end
+    
+    print("Final label: '" .. tostring(label) .. "'")
+    print("Filtered blocks count: " .. #filtered_blocks)
+    print("=== END DEBUG ===")
     
     return label, filtered_blocks
 end
