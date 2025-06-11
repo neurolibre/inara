@@ -48,8 +48,8 @@ function extract_label_from_content(content_blocks)
     local filtered_blocks = {}
     
     for _, block in ipairs(content_blocks) do
-        -- Check for :label: pattern
-        local extracted_label = block:match("^:label:%s*([%w%-_]+)%s*$")
+        -- Check for :label: pattern - improved regex to handle various formats
+        local extracted_label = block:match(":label:%s*([%w%-_]+)%s*$")
         if extracted_label then
             label = extracted_label
         else
@@ -113,8 +113,17 @@ function process_admonition(admonition_type, argument, content_blocks, article_d
         }
     end
     
-    -- Extract label from content blocks (handles :label: attribute)
-    local label, filtered_content = extract_label_from_content(content_blocks)
+    -- Check if argument is actually a label (starts with #)
+    local label = nil
+    if argument and argument:match("^#") then
+        label = argument:sub(2) -- Remove the # prefix
+    end
+    
+    -- Extract label from content blocks (handles :label: attribute) if not found in argument
+    local content_label, filtered_content = extract_label_from_content(content_blocks)
+    if not label and content_label then
+        label = content_label
+    end
     
     -- Handle figures specially
     if admonition_type == "figure" then
@@ -164,6 +173,7 @@ function Pandoc(doc)
         if admonition_type then
             -- This block starts an admonition, collect all blocks until we find closing :::
             local content_blocks = {}
+            local found_closing = false
             
             -- Skip the opening :::{type} line
             i = i + 1
@@ -173,8 +183,9 @@ function Pandoc(doc)
                 local content_block = doc.blocks[i]
                 local content_text = pandoc.utils.stringify(content_block)
                 
-                if content_text:match("^:::%s*$") then
+                if content_text:match(":::%s*$") then
                     -- Found closing :::, stop collecting
+                    found_closing = true
                     break
                 else
                     -- Add this block's content
@@ -183,9 +194,15 @@ function Pandoc(doc)
                 i = i + 1
             end
             
-            -- Process the admonition
-            local latex = process_admonition(admonition_type, argument_or_label, content_blocks, article_doi)
-            table.insert(newblocks, pandoc.RawBlock("latex", latex))
+            -- Only process if we found the closing fence
+            if found_closing then
+                -- Process the admonition
+                local latex = process_admonition(admonition_type, argument_or_label, content_blocks, article_doi)
+                table.insert(newblocks, pandoc.RawBlock("latex", latex))
+            else
+                -- If no closing fence found, keep the original block and continue
+                table.insert(newblocks, block)
+            end
         else
             -- Not an admonition block, keep as is
             table.insert(newblocks, block)
