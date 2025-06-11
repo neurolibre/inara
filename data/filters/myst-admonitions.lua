@@ -33,8 +33,75 @@ local admonition_styles = {
     }
 }
 
+-- Function to check if a string looks like an image path
+function is_image_path(arg)
+    if not arg or arg == "" then
+        return false
+    end
+    -- Check for common image extensions or path separators
+    return arg:match("%.%w+$") or arg:match("/") or arg:match("\\")
+end
+
+-- Function to extract label from content blocks
+function extract_label_from_content(content_blocks)
+    local label = nil
+    local filtered_blocks = {}
+    
+    for _, block in ipairs(content_blocks) do
+        -- Check for :label: pattern
+        local extracted_label = block:match("^:label:%s*([%w%-_]+)%s*$")
+        if extracted_label then
+            label = extracted_label
+        else
+            -- Keep this block if it's not a label line
+            table.insert(filtered_blocks, block)
+        end
+    end
+    
+    return label, filtered_blocks
+end
+
+-- Function to process a figure with image path
+function process_figure_with_image(image_path, label, caption_content)
+    local latex = "\\begin{figure}[htbp]\n\\centering\n"
+    latex = latex .. "\\includegraphics[width=\\linewidth]{" .. image_path .. "}\n"
+    
+    if caption_content and caption_content ~= "" then
+        latex = latex .. "\\caption{" .. caption_content .. "}\n"
+    end
+    
+    if label and label ~= "" then
+        latex = latex .. "\\label{" .. label .. "}\n"
+    end
+    
+    latex = latex .. "\\end{figure}"
+    return latex
+end
+
+-- Function to process a figure placeholder
+function process_figure_placeholder(label, content_blocks, article_doi)
+    local style = admonition_styles.figure
+    local content = "Please see \\href{https://preprint.neurolibre.org/" .. article_doi .. "}{the living preprint} to interact with this figure."
+    
+    -- Add content blocks if they exist
+    if #content_blocks > 0 then
+        content = content .. "\n\n\\vspace{1em}\n\n" .. table.concat(content_blocks, "\n")
+    end
+    
+    local latex = "\\begin{tcolorbox}[colback=" .. style.color .. ",colframe=" .. style.frame
+    
+    if label and label ~= "" then
+        latex = latex .. ",title=" .. style.title .. " \\label{" .. label .. "}"
+    else
+        latex = latex .. ",title=" .. style.title
+    end
+    
+    latex = latex .. "]\n" .. content .. "\n\\end{tcolorbox}"
+    return latex
+end
+
 -- Function to process an admonition block
-function process_admonition(admonition_type, admonition_id, content_blocks, article_doi)
+function process_admonition(admonition_type, argument, content_blocks, article_doi)
     local style = admonition_styles[admonition_type]
     if not style then
         -- Unknown admonition type, use default styling
@@ -46,20 +113,27 @@ function process_admonition(admonition_type, admonition_id, content_blocks, arti
         }
     end
     
-    -- Determine content based on admonition type
-    local content
-    if style.use_special_content and admonition_type == "figure" then
-        -- Special case for figures: use DOI link message
-        content = "Please see \\href{https://preprint.neurolibre.org/" .. article_doi .. "}{the living preprint} to interact with this figure."
-    else
-        -- All other admonitions: use their actual content
-        content = table.concat(content_blocks, "\n")
+    -- Extract label from content blocks (handles :label: attribute)
+    local label, filtered_content = extract_label_from_content(content_blocks)
+    
+    -- Handle figures specially
+    if admonition_type == "figure" then
+        if is_image_path(argument) then
+            -- Type 3: Figure with image path
+            return process_figure_with_image(argument, label, table.concat(filtered_content, "\n"))
+        else
+            -- Type 4: Figure with random argument (placeholder)
+            return process_figure_placeholder(label, filtered_content, article_doi)
+        end
     end
+    
+    -- Handle regular admonitions (note, warning, tip, error)
+    local content = table.concat(filtered_content, "\n")
     
     local latex = "\\begin{tcolorbox}[colback=" .. style.color .. ",colframe=" .. style.frame
     
-    if admonition_id and admonition_id ~= "" then
-        latex = latex .. ",title=" .. style.title .. " \\label{" .. admonition_id .. "}"
+    if label and label ~= "" then
+        latex = latex .. ",title=" .. style.title .. " \\label{" .. label .. "}"
     else
         latex = latex .. ",title=" .. style.title
     end
@@ -83,8 +157,9 @@ function Pandoc(doc)
         local block = doc.blocks[i]
         local blocktext = pandoc.utils.stringify(block)
         
-        -- Check for any admonition pattern :::{type}
-        local admonition_type, admonition_id = blocktext:match("^:::{([%w%-_]+)}%s*#?([%w%-_]*)")
+        -- Enhanced pattern matching for admonition opening
+        -- Handles: :::{type}, :::{type} #label, :::{type} argument
+        local admonition_type, argument_or_label = blocktext:match("^:::{([%w%-_]+)}%s*(.*)")
         
         if admonition_type then
             -- This block starts an admonition, collect all blocks until we find closing :::
@@ -109,7 +184,7 @@ function Pandoc(doc)
             end
             
             -- Process the admonition
-            local latex = process_admonition(admonition_type, admonition_id, content_blocks, article_doi)
+            local latex = process_admonition(admonition_type, argument_or_label, content_blocks, article_doi)
             table.insert(newblocks, pandoc.RawBlock("latex", latex))
         else
             -- Not an admonition block, keep as is
