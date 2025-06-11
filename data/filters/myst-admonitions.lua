@@ -4,7 +4,7 @@ local admonition_styles = {
     figure = {
         color = "red!5!white",
         frame = "red!75!black",
-        title = "Figure placeholder",
+        title = "🎚️ Interactive content placeholder",
         use_special_content = true -- Special flag for figures
     },
     note = {
@@ -49,7 +49,7 @@ function extract_label_from_content(content_blocks)
     
     for _, block in ipairs(content_blocks) do
         -- Check for :label: pattern - improved regex to handle various formats
-        local extracted_label = block:match(":label:%s*([%w%-_]+)%s*$")
+        local extracted_label = block:match(":label:%s*([%w%-_]+)")
         if extracted_label then
             label = extracted_label
         else
