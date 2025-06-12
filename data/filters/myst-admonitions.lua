@@ -266,11 +266,12 @@ function Pandoc(doc)
         
         print("DEBUG: Pandoc - processing block " .. i .. ": '" .. blocktext .. "'")
         
-        -- Check if this block contains a complete admonition (opening and closing in same block)
-        -- This handles cases where there's no empty line between opening and content
-        local complete_admonition = blocktext:match("^:+{[^}]+}.*:::%s*$")
-        if complete_admonition then
-            print("DEBUG: Pandoc - found complete admonition in single block")
+        -- Check if this block contains both opening and closing ::: (or ::::)
+        local has_opening = blocktext:match("^:+{[^}]+}")
+        local has_closing = blocktext:match(":::%s*$")
+        
+        if has_opening and has_closing then
+            print("DEBUG: Pandoc - found single-block admonition")
             
             -- Extract admonition type
             local admonition_type = blocktext:match("^:+{([^}]+)}")
@@ -284,7 +285,7 @@ function Pandoc(doc)
                 local latex = process_admonition(admonition_type, blocktext, content_blocks, article_doi)
                 table.insert(newblocks, pandoc.RawBlock("latex", latex))
             else
-                print("DEBUG: Pandoc - could not extract content from complete admonition")
+                print("DEBUG: Pandoc - could not extract content from single-block admonition")
                 table.insert(newblocks, block)
             end
         else
@@ -292,7 +293,7 @@ function Pandoc(doc)
             local admonition_type = blocktext:match("^:+{([%w%-_]+)}")
             
             if admonition_type then
-                print("DEBUG: Pandoc - found admonition type: '" .. admonition_type .. "'")
+                print("DEBUG: Pandoc - found multi-block admonition opening")
                 
                 -- This block starts an admonition, collect all blocks until we find closing :::
                 local content_blocks = {}
