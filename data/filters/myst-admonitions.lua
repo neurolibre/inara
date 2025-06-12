@@ -286,7 +286,9 @@ function Pandoc(doc)
                 local content_block = doc.blocks[i]
                 local content_text = pandoc.utils.stringify(content_block)
                 
-                print("DEBUG: Pandoc - checking content block: '" .. content_text .. "'")
+                print("DEBUG: Pandoc - checking content block " .. i .. ": '" .. content_text .. "'")
+                print("DEBUG: Pandoc - content block length: " .. string.len(content_text))
+                print("DEBUG: Pandoc - content block ends with ::: : " .. tostring(content_text:match(":::%s*$") ~= nil))
                 
                 if content_text:match(":::%s*$") then
                     -- Found closing :::, stop collecting
