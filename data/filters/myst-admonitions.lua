@@ -38,8 +38,14 @@ function is_image_path(arg)
     if not arg or arg == "" then
         return false
     end
-    -- Check for common image extensions or path separators
-    return arg:match("%.%w+$") or arg:match("/") or arg:match("\\")
+    -- Check for common image extensions
+    local has_extension = arg:match("%.%w+$")
+    -- Check for path separators (including forward and backward slashes)
+    local has_path_separator = arg:match("/") or arg:match("\\")
+    -- Check for common image file extensions
+    local is_image_extension = arg:match("%.(png|jpg|jpeg|gif|svg|pdf|eps|tiff?|bmp)$")
+    
+    return has_extension or has_path_separator or is_image_extension
 end
 
 -- Function to extract label and other attributes from the opening block
@@ -150,15 +156,27 @@ function process_admonition(admonition_type, opening_block_text, content_blocks,
     -- Handle figures specially
     if admonition_type == "figure" then
         -- Extract the argument (could be image path or random argument)
-        local argument = opening_block_text:match("^:::{[^}]+}%s*([^%s:]+)")
-        
-        if argument and is_image_path(argument) then
-            -- Type 3: Figure with image path
-            return process_figure_with_image(argument, label, table.concat(content_blocks, "\n"))
-        else
-            -- Type 4: Figure with random argument (placeholder)
-            return process_figure_placeholder(label, content_blocks, article_doi)
+        -- First, remove the opening :::{figure} part
+        local after_figure = opening_block_text:match("^:::{[^}]+}%s*(.+)")
+        if after_figure then
+            -- Extract everything before the first attribute (starts with :)
+            local argument = after_figure:match("^([^:]+)")
+            if argument then
+                -- Trim whitespace
+                argument = argument:match("^%s*(.-)%s*$")
+                
+                if argument and is_image_path(argument) then
+                    -- Type 3: Figure with image path
+                    return process_figure_with_image(argument, label, table.concat(content_blocks, "\n"))
+                else
+                    -- Type 4: Figure with random argument (placeholder)
+                    return process_figure_placeholder(label, content_blocks, article_doi)
+                end
+            end
         end
+        
+        -- Fallback: no argument found, treat as placeholder
+        return process_figure_placeholder(label, content_blocks, article_doi)
     end
     
     -- Handle regular admonitions (note, warning, tip, error)
