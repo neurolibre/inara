@@ -267,7 +267,8 @@ function Pandoc(doc)
         print("DEBUG: Pandoc - processing block " .. i .. ": '" .. blocktext .. "'")
         
         -- Check if this block contains a complete admonition (opening and closing in same block)
-        local complete_admonition = blocktext:match("^(:+{[^}]+}[^:]*:::)%s*$")
+        -- This handles cases where there's no empty line between opening and content
+        local complete_admonition = blocktext:match("^:+{[^}]+}.*:::%s*$")
         if complete_admonition then
             print("DEBUG: Pandoc - found complete admonition in single block")
             
