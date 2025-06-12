@@ -307,6 +307,7 @@ function Pandoc(doc)
                     
                     print("DEBUG: Pandoc - checking content block: '" .. content_text .. "'")
                     
+                    -- Check if this block contains the closing :::
                     if content_text:match(":::%s*$") then
                         -- Found closing :::, stop collecting
                         print("DEBUG: Pandoc - found closing :::")
@@ -316,7 +317,10 @@ function Pandoc(doc)
                         local content_before_closing = content_text:match("(.+):::%s*$")
                         if content_before_closing then
                             print("DEBUG: Pandoc - content before closing: '" .. content_before_closing .. "'")
-                            table.insert(content_blocks, content_before_closing)
+                            -- Only add if there's actual content (not just whitespace)
+                            if content_before_closing:match("%S") then
+                                table.insert(content_blocks, content_before_closing)
+                            end
                         end
                         break
                     else
