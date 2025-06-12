@@ -150,7 +150,7 @@ function process_admonition(admonition_type, opening_block_text, content_blocks,
     -- Handle figures specially
     if admonition_type == "figure" then
         -- Extract the argument (could be image path or random argument)
-        local argument = opening_block_text:match("^::{[^}]+}%s*([^%s:]+)")
+        local argument = opening_block_text:match("^:::{[^}]+}%s*([^%s:]+)")
         
         if argument and is_image_path(argument) then
             -- Type 3: Figure with image path
