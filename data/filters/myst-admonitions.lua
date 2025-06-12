@@ -198,8 +198,8 @@ function process_admonition(admonition_type, opening_block_text, content_blocks,
         print("DEBUG: process_admonition - processing figure")
         
         -- Extract the argument (could be image path or random argument)
-        -- First, remove the opening :::{figure} part
-        local after_figure = opening_block_text:match("^:::{[^}]+}%s*(.+)")
+        -- First, remove the opening :::{figure} part (handles both 3 and 4 colons)
+        local after_figure = opening_block_text:match("^:+{[^}]+}%s*(.+)")
         print("DEBUG: process_admonition - after_figure: '" .. tostring(after_figure) .. "'")
         
         if after_figure then
@@ -268,7 +268,8 @@ function Pandoc(doc)
         
         -- Updated pattern matching for admonition opening
         -- Handles: :::{type}, :::{type} #label, :::{type} argument :label: value
-        local admonition_type = blocktext:match("^:::{([%w%-_]+)}")
+        -- Fixed to handle both 3 and 4 colons: :+{([%w%-_]+)}
+        local admonition_type = blocktext:match("^:+{([%w%-_]+)}")
         
         if admonition_type then
             print("DEBUG: Pandoc - found admonition type: '" .. admonition_type .. "'")
@@ -291,6 +292,13 @@ function Pandoc(doc)
                     -- Found closing :::, stop collecting
                     print("DEBUG: Pandoc - found closing :::")
                     found_closing = true
+                    
+                    -- Extract content before the closing :::
+                    local content_before_closing = content_text:match("(.+):::%s*$")
+                    if content_before_closing then
+                        print("DEBUG: Pandoc - content before closing: '" .. content_before_closing .. "'")
+                        table.insert(content_blocks, content_before_closing)
+                    end
                     break
                 else
                     -- Add this block's content
