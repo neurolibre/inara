@@ -266,65 +266,83 @@ function Pandoc(doc)
         
         print("DEBUG: Pandoc - processing block " .. i .. ": '" .. blocktext .. "'")
         
-        -- Updated pattern matching for admonition opening
-        -- Handles: :::{type}, :::{type} #label, :::{type} argument :label: value
-        -- Fixed to handle both 3 and 4 colons: :+{([%w%-_]+)}
-        local admonition_type = blocktext:match("^:+{([%w%-_]+)}")
-        
-        if admonition_type then
-            print("DEBUG: Pandoc - found admonition type: '" .. admonition_type .. "'")
+        -- Check if this block contains a complete admonition (opening and closing in same block)
+        local complete_admonition = blocktext:match("^(:+{[^}]+}[^:]*:::)%s*$")
+        if complete_admonition then
+            print("DEBUG: Pandoc - found complete admonition in single block")
             
-            -- This block starts an admonition, collect all blocks until we find closing :::
-            local content_blocks = {}
-            local found_closing = false
+            -- Extract admonition type
+            local admonition_type = blocktext:match("^:+{([^}]+)}")
+            print("DEBUG: Pandoc - admonition type: '" .. admonition_type .. "'")
             
-            -- Skip the opening :::{type} line
-            i = i + 1
-            
-            -- Collect content blocks until we find closing :::
-            while i <= #doc.blocks do
-                local content_block = doc.blocks[i]
-                local content_text = pandoc.utils.stringify(content_block)
-                
-                print("DEBUG: Pandoc - checking content block " .. i .. ": '" .. content_text .. "'")
-                print("DEBUG: Pandoc - content block length: " .. string.len(content_text))
-                print("DEBUG: Pandoc - content block ends with ::: : " .. tostring(content_text:match(":::%s*$") ~= nil))
-                
-                if content_text:match(":::%s*$") then
-                    -- Found closing :::, stop collecting
-                    print("DEBUG: Pandoc - found closing :::")
-                    found_closing = true
-                    
-                    -- Extract content before the closing :::
-                    local content_before_closing = content_text:match("(.+):::%s*$")
-                    if content_before_closing then
-                        print("DEBUG: Pandoc - content before closing: '" .. content_before_closing .. "'")
-                        table.insert(content_blocks, content_before_closing)
-                    end
-                    break
-                else
-                    -- Add this block's content
-                    print("DEBUG: Pandoc - adding content block: '" .. content_text .. "'")
-                    table.insert(content_blocks, content_text)
-                end
-                i = i + 1
-            end
-            
-            -- Only process if we found the closing fence
-            if found_closing then
-                print("DEBUG: Pandoc - processing admonition with " .. #content_blocks .. " content blocks")
-                -- Process the admonition with the full opening block text
+            -- Extract content between opening and closing
+            local content = blocktext:match("^:+{[^}]+}%s*(.+):::%s*$")
+            if content then
+                print("DEBUG: Pandoc - extracted content: '" .. content .. "'")
+                local content_blocks = {content}
                 local latex = process_admonition(admonition_type, blocktext, content_blocks, article_doi)
                 table.insert(newblocks, pandoc.RawBlock("latex", latex))
             else
-                print("DEBUG: Pandoc - no closing fence found, keeping original block")
-                -- If no closing fence found, keep the original block and continue
+                print("DEBUG: Pandoc - could not extract content from complete admonition")
                 table.insert(newblocks, block)
             end
         else
-            print("DEBUG: Pandoc - not an admonition block, keeping as is")
-            -- Not an admonition block, keep as is
-            table.insert(newblocks, block)
+            -- Check for admonition opening (handles both 3 and 4 colons)
+            local admonition_type = blocktext:match("^:+{([%w%-_]+)}")
+            
+            if admonition_type then
+                print("DEBUG: Pandoc - found admonition type: '" .. admonition_type .. "'")
+                
+                -- This block starts an admonition, collect all blocks until we find closing :::
+                local content_blocks = {}
+                local found_closing = false
+                
+                -- Skip the opening :::{type} line
+                i = i + 1
+                
+                -- Collect content blocks until we find closing :::
+                while i <= #doc.blocks do
+                    local content_block = doc.blocks[i]
+                    local content_text = pandoc.utils.stringify(content_block)
+                    
+                    print("DEBUG: Pandoc - checking content block: '" .. content_text .. "'")
+                    
+                    if content_text:match(":::%s*$") then
+                        -- Found closing :::, stop collecting
+                        print("DEBUG: Pandoc - found closing :::")
+                        found_closing = true
+                        
+                        -- Extract content before the closing :::
+                        local content_before_closing = content_text:match("(.+):::%s*$")
+                        if content_before_closing then
+                            print("DEBUG: Pandoc - content before closing: '" .. content_before_closing .. "'")
+                            table.insert(content_blocks, content_before_closing)
+                        end
+                        break
+                    else
+                        -- Add this block's content
+                        print("DEBUG: Pandoc - adding content block: '" .. content_text .. "'")
+                        table.insert(content_blocks, content_text)
+                    end
+                    i = i + 1
+                end
+                
+                -- Only process if we found the closing fence
+                if found_closing then
+                    print("DEBUG: Pandoc - processing admonition with " .. #content_blocks .. " content blocks")
+                    -- Process the admonition with the full opening block text
+                    local latex = process_admonition(admonition_type, blocktext, content_blocks, article_doi)
+                    table.insert(newblocks, pandoc.RawBlock("latex", latex))
+                else
+                    print("DEBUG: Pandoc - no closing fence found, keeping original block")
+                    -- If no closing fence found, keep the original block and continue
+                    table.insert(newblocks, block)
+                end
+            else
+                print("DEBUG: Pandoc - not an admonition block, keeping as is")
+                -- Not an admonition block, keep as is
+                table.insert(newblocks, block)
+            end
         end
         
         i = i + 1
