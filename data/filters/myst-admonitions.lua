@@ -4,7 +4,7 @@ local admonition_styles = {
     figure = {
         color = "red!5!white",
         frame = "red!75!black",
-        title = "⎋ Interactive content placeholder",
+        title = "Interactive content placeholder",
         use_special_content = true -- Special flag for figures
     },
     note = {
