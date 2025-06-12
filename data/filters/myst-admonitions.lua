@@ -283,8 +283,11 @@ function Pandoc(doc)
                 -- Remove leading #argument token (e.g., #fig2cell) if present
                 local cleaned = content:gsub("^#%S+%s*", "")
                 -- Remove one or more leading attribute pairs like :label: fig2 or :foo: bar
-                -- This pattern matches sequences starting with a colon, an attribute key, another colon, the value, and trailing spaces
-                cleaned = cleaned:gsub("^(%:%w[%w%-_]*:%s*%S+%s*)+", "")
+                -- Repeat until no such pair at the beginning remains
+                repeat
+                    local before = cleaned
+                    cleaned = cleaned:gsub("^:%w[%w%-_]*:%s*%S+%s*", "")
+                until cleaned == before
 
                 print("DEBUG: Pandoc - extracted content: '" .. content .. "'")
                 print("DEBUG: Pandoc - cleaned content: '" .. cleaned .. "'")
