@@ -152,7 +152,8 @@ function process_figure_placeholder(label, content_blocks, article_doi)
     local latex = "\\begin{tcolorbox}[colback=" .. style.color .. ",colframe=" .. style.frame
     
     if label and label ~= "" then
-        latex = latex .. ",title=" .. style.title .. " \\label{" .. label .. "}"
+        latex = latex .. ",title=\\refstepcounter{figure}Figure~\\thefigure: " .. style.title .. " \\label{" .. label .. "}"
+        --latex = latex .. ",title=" .. style.title .. " \\label{" .. label .. "}"
     else
         latex = latex .. ",title=" .. style.title
     end
