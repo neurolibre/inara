@@ -19,6 +19,9 @@ filters:
     type: lua
     path: orcid-uri.lua
 
+  - type: lua
+    path: myst-admonitions.lua
+
 # This needs more work before we can really enable it.
 #   - type: lua
 #     path: extract-images.lua
