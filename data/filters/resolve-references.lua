@@ -94,7 +94,7 @@ return {
       end
       local is_ref_or_label = raw.text:match '^\\ref%{'
         or raw.text:match '^\\autoref'
-        --or raw.text:match '^\\label%{.*%}$'
+        or raw.text:match '^\\label%{.*%}$'
       if is_ref_or_label then
         local first = pandoc.read(raw.text, 'latex').blocks[1]
         return first and first.content or nil
