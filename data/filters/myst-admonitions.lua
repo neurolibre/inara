@@ -49,16 +49,17 @@ local function sanitize_latex_string(str)
         return ""
     end
     -- Escape special LaTeX characters
-    str = str:gsub("\\", "\\textbackslash{}")
-    str = str:gsub("{", "\\{")
-    str = str:gsub("}", "\\}")
-    str = str:gsub("%$", "\\$")
-    str = str:gsub("&", "\\&")
-    str = str:gsub("%%", "\\%")
-    str = str:gsub("#", "\\#")
-    str = str:gsub("%^", "\\textasciicircum{}")
-    str = str:gsub("_", "\\_")
-    str = str:gsub("~", "\\textasciitilde{}")
+    -- Note: Using function form to avoid replacement string interpretation issues
+    str = str:gsub("\\", function() return "\\textbackslash{}" end)
+    str = str:gsub("{", function() return "\\{" end)
+    str = str:gsub("}", function() return "\\}" end)
+    str = str:gsub("%$", function() return "\\$" end)
+    str = str:gsub("&", function() return "\\&" end)
+    str = str:gsub("%%", function() return "\\%" end)
+    str = str:gsub("#", function() return "\\#" end)
+    str = str:gsub("%^", function() return "\\textasciicircum{}" end)
+    str = str:gsub("_", function() return "\\_" end)
+    str = str:gsub("~", function() return "\\textasciitilde{}" end)
     return str
 end
 
