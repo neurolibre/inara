@@ -1,11 +1,13 @@
--- Generalized filter for MyST markdown admonitions
+-- Robust MyST markdown admonitions filter with nested support
+-- Handles complex nested structures, proper validation, and security
+
 -- Define admonition types and their LaTeX styling
 local admonition_styles = {
     figure = {
         color = "red!5!white",
         frame = "red!75!black",
         title = "Interactive content placeholder",
-        use_special_content = true -- Special flag for figures
+        use_special_content = true
     },
     note = {
         color = "blue!5!white",
@@ -33,143 +35,200 @@ local admonition_styles = {
     }
 }
 
--- Function to check if a string looks like an image path
-function is_image_path(arg)
+-- Logging function (can be disabled by setting to false)
+local ENABLE_LOGGING = false
+local function log(message)
+    if ENABLE_LOGGING then
+        io.stderr:write("[MyST-Admonitions] " .. message .. "\n")
+    end
+end
+
+-- Input sanitization functions
+local function sanitize_latex_string(str)
+    if not str or str == "" then
+        return ""
+    end
+    -- Escape special LaTeX characters
+    str = str:gsub("\\", "\\textbackslash{}")
+    str = str:gsub("{", "\\{")
+    str = str:gsub("}", "\\}")
+    str = str:gsub("%$", "\\$")
+    str = str:gsub("&", "\\&")
+    str = str:gsub("%%", "\\%")
+    str = str:gsub("#", "\\#")
+    str = str:gsub("%^", "\\textasciicircum{}")
+    str = str:gsub("_", "\\_")
+    str = str:gsub("~", "\\textasciitilde{}")
+    return str
+end
+
+local function sanitize_file_path(path)
+    if not path or path == "" then
+        return ""
+    end
+    -- Remove potentially dangerous characters and sequences
+    path = path:gsub("%.%./", "") -- Remove ../ sequences
+    path = path:gsub("%.%.\\", "") -- Remove ..\ sequences
+    path = path:gsub("|", "") -- Remove pipes
+    path = path:gsub(";", "") -- Remove semicolons
+    path = path:gsub("`", "") -- Remove backticks
+    -- Only allow alphanumeric, dots, dashes, underscores, and path separators
+    path = path:gsub("[^%w%.%-_/\\]", "")
+    return path
+end
+
+local function sanitize_url_component(component)
+    if not component or component == "" then
+        return ""
+    end
+    -- Allow only alphanumeric, dots, dashes, and underscores for URL components
+    return component:gsub("[^%w%.%-_]", "")
+end
+
+-- Validation functions
+local function is_valid_admonition_type(type_name)
+    return type_name and type_name:match("^[%w%-_]+$") and #type_name > 0 and #type_name <= 50
+end
+
+local function is_valid_label(label)
+    return label and label:match("^[%w%-_]+$") and #label > 0 and #label <= 100
+end
+
+local function is_image_path(arg)
     if not arg or arg == "" then
-        print("DEBUG: is_image_path - arg is nil or empty")
         return false
     end
     
-    print("DEBUG: is_image_path - checking argument: '" .. arg .. "'")
-    
     -- Check for common image extensions
     local has_extension = arg:match("%.%w+$")
-    -- Check for path separators (including forward and backward slashes)
+    -- Check for path separators
     local has_path_separator = arg:match("/") or arg:match("\\")
     -- Check for common image file extensions
     local is_image_extension = arg:match("%.(png|jpg|jpeg|gif|svg|pdf|eps|tiff?|bmp)$")
     
-    print("DEBUG: is_image_path - has_extension: " .. tostring(has_extension))
-    print("DEBUG: is_image_path - has_path_separator: " .. tostring(has_path_separator))
-    print("DEBUG: is_image_path - is_image_extension: " .. tostring(is_image_extension))
-    
-    local result = has_extension or has_path_separator or is_image_extension
-    print("DEBUG: is_image_path - final result: " .. tostring(result))
-    
-    return result
+    return has_extension or has_path_separator or is_image_extension
 end
 
--- Function to extract label and other attributes from the opening block
-function extract_attributes_from_opening_block(block_text)
-    print("DEBUG: extract_attributes_from_opening_block - input: '" .. block_text .. "'")
-    
-    local label = nil
-    local other_attributes = {}
-    
-    -- Extract label from :label: attribute
-    local extracted_label = block_text:match(":label:%s*([%w%-_]+)")
-    if extracted_label then
-        label = extracted_label
-        print("DEBUG: extract_attributes_from_opening_block - found label: '" .. label .. "'")
-    else
-        print("DEBUG: extract_attributes_from_opening_block - no label found")
+-- Fence parsing with proper nesting support
+local function parse_fence_line(line)
+    local fence_match = line:match("^(:+){([^}]*)}(.*)$")
+    if not fence_match then
+        return nil
     end
     
-    -- Extract other attributes (like :aaa:, :ccc:, etc.)
-    for attr_name, attr_value in block_text:gmatch(":([%w%-_]+):%s*([%w%-_]+)") do
-        if attr_name ~= "label" then
-            other_attributes[attr_name] = attr_value
-            print("DEBUG: extract_attributes_from_opening_block - found attribute: " .. attr_name .. " = " .. attr_value)
-        end
+    local colons, type_name, remainder = line:match("^(:+){([^}]*)}(.*)$")
+    if not colons or not type_name then
+        return nil
     end
     
-    print("DEBUG: extract_attributes_from_opening_block - final label: '" .. tostring(label) .. "'")
-    return label, other_attributes
+    local depth = #colons
+    if depth < 3 then
+        return nil -- Invalid fence
+    end
+    
+    return {
+        depth = depth,
+        type = type_name:match("^%s*(.-)%s*$"), -- Trim whitespace
+        remainder = remainder:match("^%s*(.-)%s*$"), -- Trim whitespace
+        is_opening = true
+    }
 end
 
--- Function to extract label from content blocks (for backward compatibility)
-function extract_label_from_content(content_blocks)
-    print("DEBUG: extract_label_from_content - number of content blocks: " .. #content_blocks)
+local function parse_closing_fence(line)
+    local colons = line:match("^(:+)%s*$")
+    if not colons then
+        return nil
+    end
     
+    local depth = #colons
+    if depth < 3 then
+        return nil
+    end
+    
+    return {
+        depth = depth,
+        is_closing = true
+    }
+end
+
+-- Attribute parsing with validation
+local function parse_attributes(text)
+    local attributes = {}
     local label = nil
-    local filtered_blocks = {}
     
-    for i, block in ipairs(content_blocks) do
-        print("DEBUG: extract_label_from_content - block " .. i .. ": '" .. block .. "'")
-        -- Check for :label: pattern in content blocks
-        local extracted_label = block:match("^:label:%s*([%w%-_]+)%s*$")
-        if extracted_label then
-            label = extracted_label
-            print("DEBUG: extract_label_from_content - found label in content: '" .. label .. "'")
-            -- Don't add this block to filtered_blocks since it's a label line
+    -- Parse :key: value patterns
+    for attr_name, attr_value in text:gmatch(":([%w%-_]+):%s*([%w%-_.]+)") do
+        if is_valid_label(attr_name) and is_valid_label(attr_value) then
+            if attr_name == "label" then
+                label = attr_value
+            else
+                attributes[attr_name] = attr_value
+            end
         else
-            -- Keep this block if it's not a label line
-            table.insert(filtered_blocks, block)
+            log("Invalid attribute: " .. tostring(attr_name) .. "=" .. tostring(attr_value))
         end
     end
     
-    print("DEBUG: extract_label_from_content - final label: '" .. tostring(label) .. "'")
-    print("DEBUG: extract_label_from_content - filtered blocks count: " .. #filtered_blocks)
-    return label, filtered_blocks
+    return label, attributes
 end
 
--- Function to process a figure with image path
-function process_figure_with_image(image_path, label, caption_content)
-    print("DEBUG: process_figure_with_image - image_path: '" .. tostring(image_path) .. "'")
-    print("DEBUG: process_figure_with_image - label: '" .. tostring(label) .. "'")
-    print("DEBUG: process_figure_with_image - caption_content: '" .. tostring(caption_content) .. "'")
+-- Content processing functions
+local function process_figure_with_image(image_path, label, caption_content)
+    local safe_path = sanitize_file_path(image_path)
+    local safe_label = label and sanitize_latex_string(label) or ""
+    local safe_caption = caption_content and sanitize_latex_string(caption_content) or ""
+    
+    log("Processing figure with image: " .. safe_path)
     
     local latex = "\\begin{figure}[htbp]\n\\centering\n"
-    latex = latex .. "\\includegraphics[width=\\linewidth]{" .. image_path .. "}\n"
+    latex = latex .. "\\includegraphics[width=\\linewidth]{" .. safe_path .. "}\n"
     
-    if caption_content and caption_content ~= "" then
-        latex = latex .. "\\caption{" .. caption_content .. "}\n"
+    if safe_caption ~= "" then
+        latex = latex .. "\\caption{" .. safe_caption .. "}\n"
     end
     
-    if label and label ~= "" then
-        latex = latex .. "\\label{" .. label .. "}\n"
+    if safe_label ~= "" then
+        latex = latex .. "\\label{" .. safe_label .. "}\n"
     end
     
     latex = latex .. "\\end{figure}"
-    print("DEBUG: process_figure_with_image - generated LaTeX: " .. latex)
     return latex
 end
 
--- Function to process a figure placeholder
-function process_figure_placeholder(label, content_blocks, article_doi)
-    print("DEBUG: process_figure_placeholder - label: '" .. tostring(label) .. "'")
-    print("DEBUG: process_figure_placeholder - content_blocks count: " .. #content_blocks)
-    print("DEBUG: process_figure_placeholder - article_doi: '" .. tostring(article_doi) .. "'")
+local function process_figure_placeholder(label, content_blocks, article_doi)
+    local safe_label = label and sanitize_latex_string(label) or ""
+    local safe_doi = sanitize_url_component(article_doi or "")
+    
+    log("Processing figure placeholder with label: " .. safe_label)
     
     local style = admonition_styles.figure
-    local content = "Please see \\href{https://preprint.neurolibre.org/" .. article_doi .. "}{the living preprint} to interact with this figure."
+    local content = "Please see \\href{https://preprint.neurolibre.org/" .. safe_doi .. "}{the living preprint} to interact with this figure."
     
     -- Add content blocks if they exist
     if #content_blocks > 0 then
-        content = content .. "\n\n\\vspace{1em}\n\n" .. table.concat(content_blocks, "\n")
+        local safe_content = {}
+        for _, block in ipairs(content_blocks) do
+            table.insert(safe_content, sanitize_latex_string(block))
+        end
+        content = content .. "\n\n\\vspace{1em}\n\n" .. table.concat(safe_content, "\n")
     end
     
     local latex = "\\begin{tcolorbox}[colback=" .. style.color .. ",colframe=" .. style.frame
     
-    if label and label ~= "" then
-        latex = latex .. ",title=\\refstepcounter{figure}Figure~\\thefigure: " .. style.title .. " \\label{" .. label .. "}"
-        --latex = latex .. ",title=" .. style.title .. " \\label{" .. label .. "}"
+    if safe_label ~= "" then
+        latex = latex .. ",title=\\refstepcounter{figure}Figure~\\thefigure: " .. style.title .. " \\label{" .. safe_label .. "}"
     else
         latex = latex .. ",title=" .. style.title
     end
     
     latex = latex .. "]\n" .. content .. "\n\\end{tcolorbox}"
-    print("DEBUG: process_figure_placeholder - generated LaTeX: " .. latex)
     return latex
 end
 
--- Function to process an admonition block
-function process_admonition(admonition_type, opening_block_text, content_blocks, article_doi)
-    print("=== DEBUG: process_admonition ===")
-    print("DEBUG: process_admonition - admonition_type: '" .. admonition_type .. "'")
-    print("DEBUG: process_admonition - opening_block_text: '" .. opening_block_text .. "'")
-    print("DEBUG: process_admonition - content_blocks count: " .. #content_blocks)
-    print("DEBUG: process_admonition - article_doi: '" .. tostring(article_doi) .. "'")
+local function process_regular_admonition(admonition_type, label, content_blocks)
+    local safe_label = label and sanitize_latex_string(label) or ""
+    
+    log("Processing regular admonition: " .. admonition_type)
     
     local style = admonition_styles[admonition_type]
     if not style then
@@ -177,197 +236,195 @@ function process_admonition(admonition_type, opening_block_text, content_blocks,
         style = {
             color = "gray!5!white",
             frame = "gray!75!black",
-            title = admonition_type:gsub("^%l", string.upper), -- Capitalize first letter
+            title = sanitize_latex_string(admonition_type:gsub("^%l", string.upper)),
             use_special_content = false
         }
     end
     
-    -- Extract label and other attributes from the opening block
-    local label, other_attributes = extract_attributes_from_opening_block(opening_block_text)
-    
-    -- If no label found in opening block, check content blocks (backward compatibility)
-    if not label then
-    local content_label, filtered_content = extract_label_from_content(content_blocks)
-        if content_label then
-        label = content_label
-            content_blocks = filtered_content
-        end
+    -- Sanitize content blocks
+    local safe_content_blocks = {}
+    for _, block in ipairs(content_blocks) do
+        table.insert(safe_content_blocks, sanitize_latex_string(block))
     end
-    
-    -- Handle figures specially
-    if admonition_type == "figure" then
-        print("DEBUG: process_admonition - processing figure")
-        
-        -- Extract the argument (could be image path or random argument)
-        -- First, remove the opening :::{figure} part (handles both 3 and 4 colons)
-        local after_figure = opening_block_text:match("^:+{[^}]+}%s*(.+)")
-        print("DEBUG: process_admonition - after_figure: '" .. tostring(after_figure) .. "'")
-        
-        if after_figure then
-            -- Extract everything before the first attribute (starts with :)
-            local argument = after_figure:match("^([^:]+)")
-            print("DEBUG: process_admonition - raw argument: '" .. tostring(argument) .. "'")
-            
-            if argument then
-                -- Trim whitespace
-                argument = argument:match("^%s*(.-)%s*$")
-                print("DEBUG: process_admonition - trimmed argument: '" .. tostring(argument) .. "'")
-                
-                if argument and is_image_path(argument) then
-                    print("DEBUG: process_admonition - argument is image path, creating figure")
-            -- Type 3: Figure with image path
-                    return process_figure_with_image(argument, label, table.concat(content_blocks, "\n"))
-        else
-                    print("DEBUG: process_admonition - argument is not image path, creating placeholder")
-            -- Type 4: Figure with random argument (placeholder)
-                    return process_figure_placeholder(label, content_blocks, article_doi)
-                end
-            end
-        end
-        
-        print("DEBUG: process_admonition - no argument found, creating placeholder")
-        -- Fallback: no argument found, treat as placeholder
-        return process_figure_placeholder(label, content_blocks, article_doi)
-    end
-    
-    -- Handle regular admonitions (note, warning, tip, error)
-    print("DEBUG: process_admonition - processing regular admonition")
-    local content = table.concat(content_blocks, "\n")
+    local content = table.concat(safe_content_blocks, "\n")
     
     local latex = "\\begin{tcolorbox}[colback=" .. style.color .. ",colframe=" .. style.frame
     
-    if label and label ~= "" then
-        latex = latex .. ",title=" .. style.title .. " \\label{" .. label .. "}"
+    if safe_label ~= "" then
+        latex = latex .. ",title=" .. style.title .. " \\label{" .. safe_label .. "}"
     else
         latex = latex .. ",title=" .. style.title
     end
     
     latex = latex .. "]\n" .. content .. "\n\\end{tcolorbox}"
-    print("DEBUG: process_admonition - generated LaTeX: " .. latex)
-    print("=== END DEBUG: process_admonition ===")
     return latex
 end
 
--- Main document processing function
+-- Hierarchical admonition processing with proper nesting
+local function process_admonition_stack(stack, article_doi)
+    local results = {}
+    
+    for _, admonition in ipairs(stack) do
+        local admonition_type = admonition.type
+        local label = admonition.label
+        local content_blocks = admonition.content_blocks
+        local argument = admonition.argument
+        
+        if not is_valid_admonition_type(admonition_type) then
+            log("Invalid admonition type: " .. tostring(admonition_type))
+            goto continue
+        end
+        
+        if label and not is_valid_label(label) then
+            log("Invalid label: " .. tostring(label))
+            label = nil
+        end
+        
+        local latex
+        if admonition_type == "figure" then
+            if argument and is_image_path(argument) then
+                latex = process_figure_with_image(argument, label, table.concat(content_blocks, "\n"))
+            else
+                latex = process_figure_placeholder(label, content_blocks, article_doi)
+            end
+        else
+            latex = process_regular_admonition(admonition_type, label, content_blocks)
+        end
+        
+        table.insert(results, pandoc.RawBlock("latex", latex))
+        
+        ::continue::
+    end
+    
+    return results
+end
+
+-- Main document processing with hierarchical parsing
 function Pandoc(doc)
-    print("=== DEBUG: Pandoc function started MyST admonitions===")
+    log("Starting MyST admonitions processing")
+    
     local newblocks = {}
-    local i = 1
+    local admonition_stack = {}
+    local current_admonition = nil
     
     -- Get article DOI from metadata
     local article_doi = ""
     if doc.meta.article and doc.meta.article.doi then
         article_doi = pandoc.utils.stringify(doc.meta.article.doi)
     end
-    -- print("DEBUG: Pandoc - article_doi: '" .. article_doi .. "'")
     
-    while i <= #doc.blocks do
-        local block = doc.blocks[i]
+    for i, block in ipairs(doc.blocks) do
         local blocktext = pandoc.utils.stringify(block)
         
-        -- print("DEBUG: Pandoc - processing block " .. i .. ": '" .. blocktext .. "'")
-        
-        -- Check if this block contains both opening and closing ::: (or ::::)
-        local has_opening = blocktext:match("^:+{[^}]+}")
-        local has_closing = blocktext:match(":::%s*$")
-        
-        if has_opening and has_closing then
-            -- print("DEBUG: Pandoc - found single-block admonition")
+        -- Try to parse as opening fence
+        local opening_fence = parse_fence_line(blocktext)
+        if opening_fence then
+            local admonition_type = opening_fence.type
+            local remainder = opening_fence.remainder
             
-            -- Extract admonition type
-            local admonition_type = blocktext:match("^:+{([^}]+)}")
-            -- print("DEBUG: Pandoc - admonition type: '" .. admonition_type .. "'")
+            log("Found opening fence: " .. admonition_type .. " at depth " .. opening_fence.depth)
             
-            -- Extract content between opening and closing
-            local content = blocktext:match("^:+{[^}]+}%s*(.+):::%s*$")
-            if content then
-                -- Remove leading #argument token (e.g., #fig2cell) if present
-                local cleaned = content:gsub("^#%S+%s*", "")
-                -- Remove one or more leading attribute pairs like :label: fig2 or :foo: bar
-                -- Repeat until no such pair at the beginning remains
-                repeat
-                    local before = cleaned
-                    cleaned = cleaned:gsub("^:%w[%w%-_]*:%s*%S+%s*", "")
-                until cleaned == before
-
-                -- print("DEBUG: Pandoc - extracted content: '" .. content .. "'")
-                -- print("DEBUG: Pandoc - cleaned content: '" .. cleaned .. "'")
-
-                local content_blocks = {cleaned}
-                local latex = process_admonition(admonition_type, blocktext, content_blocks, article_doi)
-                table.insert(newblocks, pandoc.RawBlock("latex", latex))
-            else
-                -- print("DEBUG: Pandoc - could not extract content from single-block admonition")
-                table.insert(newblocks, block)
-            end
-        else
-            -- Check for admonition opening (handles both 3 and 4 colons)
-            local admonition_type = blocktext:match("^:+{([%w%-_]+)}")
-        
-        if admonition_type then
-                -- print("DEBUG: Pandoc - found multi-block admonition opening")
-                
-            -- This block starts an admonition, collect all blocks until we find closing :::
-            local content_blocks = {}
-            local found_closing = false
+            -- Parse label and attributes from remainder
+            local label, attributes = parse_attributes(remainder)
             
-            -- Skip the opening :::{type} line
-            i = i + 1
-            
-            -- Collect content blocks until we find closing :::
-            while i <= #doc.blocks do
-                local content_block = doc.blocks[i]
-                local content_text = pandoc.utils.stringify(content_block)
-                
-                    -- print("DEBUG: Pandoc - checking content block: '" .. content_text .. "'")
-                    
-                    -- Check if this block contains the closing :::
-                if content_text:match(":::%s*$") then
-                    -- Found closing :::, stop collecting
-                        -- print("DEBUG: Pandoc - found closing :::")
-                    found_closing = true
-                        
-                        -- Extract content before the closing :::
-                        local content_before_closing = content_text:match("(.+):::%s*$")
-                        if content_before_closing then
-                            -- print("DEBUG: Pandoc - content before closing: '" .. content_before_closing .. "'")
-                            -- Only add if there's actual content (not just whitespace)
-                            if content_before_closing:match("%S") then
-                                table.insert(content_blocks, content_before_closing)
-                            end
-                        end
-                    break
-                else
-                    -- Add this block's content
-                        -- print("DEBUG: Pandoc - adding content block: '" .. content_text .. "'")
-                    table.insert(content_blocks, content_text)
-                end
-                i = i + 1
+            -- Extract argument (everything before first attribute)
+            local argument = remainder:match("^([^:]*)")
+            if argument then
+                argument = argument:match("^%s*(.-)%s*$") -- Trim whitespace
+                if argument == "" then argument = nil end
             end
             
-            -- Only process if we found the closing fence
-            if found_closing then
-                    -- print("DEBUG: Pandoc - processing admonition with " .. #content_blocks .. " content blocks")
-                    -- Process the admonition with the full opening block text
-                    local latex = process_admonition(admonition_type, blocktext, content_blocks, article_doi)
-                table.insert(newblocks, pandoc.RawBlock("latex", latex))
-            else
-                    -- print("DEBUG: Pandoc - no closing fence found, keeping original block")
-                -- If no closing fence found, keep the original block and continue
-                table.insert(newblocks, block)
+            -- Create new admonition
+            local new_admonition = {
+                type = admonition_type,
+                depth = opening_fence.depth,
+                label = label,
+                attributes = attributes,
+                argument = argument,
+                content_blocks = {},
+                parent = current_admonition
+            }
+            
+            -- Handle nesting
+            if current_admonition then
+                -- We're inside another admonition, add this as nested content
+                table.insert(current_admonition.content_blocks, "NESTED_ADMONITION_PLACEHOLDER_" .. #admonition_stack)
             end
-        else
-                -- print("DEBUG: Pandoc - not an admonition block, keeping as is")
-            -- Not an admonition block, keep as is
-            table.insert(newblocks, block)
-            end
+            
+            table.insert(admonition_stack, new_admonition)
+            current_admonition = new_admonition
+            
+            goto continue
         end
         
-        i = i + 1
+        -- Try to parse as closing fence
+        local closing_fence = parse_closing_fence(blocktext)
+        if closing_fence and current_admonition then
+            log("Found closing fence at depth " .. closing_fence.depth)
+            
+            -- Find matching opening fence by depth
+            local matched_admonition = nil
+            for j = #admonition_stack, 1, -1 do
+                if admonition_stack[j].depth == closing_fence.depth then
+                    matched_admonition = admonition_stack[j]
+                    break
+                end
+            end
+            
+            if matched_admonition then
+                -- Process and remove matched admonition and all nested ones
+                local to_process = {}
+                while #admonition_stack > 0 do
+                    local admonition = table.remove(admonition_stack)
+                    table.insert(to_process, 1, admonition) -- Insert at beginning to maintain order
+                    if admonition == matched_admonition then
+                        break
+                    end
+                end
+                
+                -- Process the completed admonitions
+                local processed = process_admonition_stack(to_process, article_doi)
+                for _, processed_block in ipairs(processed) do
+                    table.insert(newblocks, processed_block)
+                end
+                
+                -- Update current admonition
+                current_admonition = #admonition_stack > 0 and admonition_stack[#admonition_stack] or nil
+            else
+                log("No matching opening fence found for closing fence at depth " .. closing_fence.depth)
+                -- No matching opening fence, treat as regular content
+                if current_admonition then
+                    table.insert(current_admonition.content_blocks, blocktext)
+                else
+                    table.insert(newblocks, block)
+                end
+            end
+            
+            goto continue
+        end
+        
+        -- Regular content
+        if current_admonition then
+            -- We're inside an admonition, add to content
+            table.insert(current_admonition.content_blocks, blocktext)
+        else
+            -- Outside any admonition, keep block as is
+            table.insert(newblocks, block)
+        end
+        
+        ::continue::
     end
     
-    -- print("DEBUG: Pandoc - processed " .. #newblocks .. " blocks")
-    print("=== DEBUG: Pandoc function ended MyST admonitions===")
+    -- Handle any unclosed admonitions
+    if #admonition_stack > 0 then
+        log("Warning: Found " .. #admonition_stack .. " unclosed admonitions")
+        local processed = process_admonition_stack(admonition_stack, article_doi)
+        for _, processed_block in ipairs(processed) do
+            table.insert(newblocks, processed_block)
+        end
+    end
+    
+    log("Completed MyST admonitions processing")
     doc.blocks = newblocks
     return doc
 end
