@@ -17,6 +17,10 @@ filters:
     path: conditional-archives.lua
   - type: lua
     path: myst-admonitions.lua
+    # Must follow myst-admonitions.lua: it finds figure labels in the LaTeX
+    # that filter emits.
+  - type: lua
+    path: myst-references.lua
 
 variables:
   # styling options
