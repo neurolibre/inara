@@ -1,0 +1,10 @@
+project:
+  title: Ad Hoc Affiliation
+  authors:
+    - name: Ada Lovelace
+      affiliations: engine
+    - name: Grace Hopper
+      affiliations: Yale University
+  affiliations:
+    - id: engine
+      institution: Analytical Engine Institute

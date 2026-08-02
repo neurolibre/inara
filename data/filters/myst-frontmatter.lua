@@ -120,6 +120,65 @@ local function build_affiliations (project)
   return affiliations, index_of
 end
 
+--- Normalise an author's `affiliations` value to a list of trimmed tokens.
+--
+-- MyST accepts a list, a single id, or several ids in one `;`-separated string.
+local function affiliation_tokens (value)
+  local tokens = pandoc.List{}
+  if value == nil then
+    return tokens
+  end
+  if ptype(value) == 'List' then
+    for _, entry in ipairs(value) do
+      tokens:insert(stringify(entry))
+    end
+  else
+    for token in stringify(value):gmatch '[^;]+' do
+      tokens:insert((token:gsub('^%s*(.-)%s*$', '%1')))
+    end
+  end
+  return tokens
+end
+
+--- Build the author list, resolving affiliation ids to indices.
+--
+-- Appends to `affiliations` and `index_of` for any token that matches no
+-- declared id: MyST permits ad-hoc affiliations, and dropping the author's
+-- affiliation would be worse than inventing an entry for it.
+local function build_authors (project, affiliations, index_of)
+  local authors = pandoc.List{}
+  for _, source in ipairs(project.authors or {}) do
+    local author = {name = to_inlines(source.name)}
+    author.email = source.email
+    author.orcid = source.orcid
+    author.corresponding = source.corresponding
+    author['equal-contrib'] = source.equal_contributor
+
+    local indices = pandoc.List{}
+    local tokens = affiliation_tokens(source.affiliations or source.affiliation)
+    for _, token in ipairs(tokens) do
+      local index = index_of[token]
+      if not index then
+        index = tostring(#affiliations + 1)
+        affiliations:insert{
+          index = index,
+          name = to_inlines(token),
+        }
+        index_of[token] = index
+      end
+      indices:insert(index)
+    end
+    if #indices > 0 then
+      author.affiliation = pandoc.Inlines{
+        pandoc.Str(table.concat(indices, ','))
+      }
+    end
+
+    authors:insert(author)
+  end
+  return authors
+end
+
 function Meta (meta)
   local project = read_project()
   if not project then
@@ -139,7 +198,11 @@ function Meta (meta)
   fill('tags', project.keywords)
   fill('bibliography', project.bibliography)
 
-  local affiliations = build_affiliations(project)
+  local affiliations, index_of = build_affiliations(project)
+  local authors = build_authors(project, affiliations, index_of)
+  if #authors > 0 then
+    fill('authors', authors)
+  end
   if #affiliations > 0 then
     fill('affiliations', affiliations)
   end
