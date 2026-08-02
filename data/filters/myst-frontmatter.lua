@@ -62,6 +62,64 @@ local function read_project ()
   return ptype(project) == 'table' and project or nil
 end
 
+-- Parts of a myst.yml affiliation, joined into the single name string that
+-- inara's templates and the Zenodo task expect. Department precedes
+-- institution to match the convention in existing NeuroLibre front matter.
+local NAME_PARTS = {
+  'department',
+  'institution',
+  'address',
+  'city',
+  'region',
+  'postal_code',
+  'country',
+}
+
+--- Read one affiliation part, honouring MyST's aliases.
+--
+-- Written as statements rather than an `or` chain: `a[k] or (k == 'institution'
+-- and a.name)` yields `false`, not nil, for every other key.
+local function part (aff, key)
+  local value = aff[key]
+  if value == nil and key == 'institution' then
+    value = aff.name
+  end
+  if value == nil and key == 'region' then
+    value = aff.state
+  end
+  return value
+end
+
+--- Join an affiliation's parts into one Inlines value.
+local function affiliation_name (aff)
+  local name = pandoc.Inlines{}
+  for _, key in ipairs(NAME_PARTS) do
+    local value = part(aff, key)
+    if value ~= nil and stringify(value) ~= '' then
+      if #name > 0 then
+        name:insert(pandoc.Str(','))
+        name:insert(pandoc.Space())
+      end
+      name:extend(to_inlines(value))
+    end
+  end
+  return name
+end
+
+--- Build the indexed affiliation list and an id -> index map.
+local function build_affiliations (project)
+  local affiliations = pandoc.List{}
+  local index_of = {}
+  for i, aff in ipairs(project.affiliations or {}) do
+    local index = tostring(i)
+    affiliations:insert{index = index, name = affiliation_name(aff)}
+    if aff.id ~= nil then
+      index_of[stringify(aff.id)] = index
+    end
+  end
+  return affiliations, index_of
+end
+
 function Meta (meta)
   local project = read_project()
   if not project then
@@ -80,6 +138,11 @@ function Meta (meta)
   fill('date', project.date)
   fill('tags', project.keywords)
   fill('bibliography', project.bibliography)
+
+  local affiliations = build_affiliations(project)
+  if #affiliations > 0 then
+    fill('affiliations', affiliations)
+  end
 
   if #filled > 0 then
     io.stderr:write(

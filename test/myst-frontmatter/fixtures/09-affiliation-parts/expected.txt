@@ -1,0 +1,7 @@
+TITLE:Affiliation Parts
+DATE:
+TAGS:
+BIB:
+AUTHORS:[Ada Lovelace|aff=<1>|orcid=|cor=|eq=]
+AFFS:[1|Département de génie physique, École Polytechnique de Montréal, 2500 Chemin de Polytechnique, Montreal, Quebec, H3T 1J4, Canada][2|Harvard University, Massachusetts][3|National Institute of Standards and Technology]
+CORRESP:
