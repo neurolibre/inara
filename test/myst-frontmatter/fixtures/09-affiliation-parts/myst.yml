@@ -1,3 +1,6 @@
+# This author's name and affiliation index deliberately match the front
+# matter's, so this fixture exercises affiliation name composition only and does
+# NOT discriminate which source supplied the authors -- fixture 04 guards that.
 project:
   title: Affiliation Parts
   authors:

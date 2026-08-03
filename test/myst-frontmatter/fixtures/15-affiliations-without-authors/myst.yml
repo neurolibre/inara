@@ -1,0 +1,13 @@
+# The front matter declares affiliations but no authors. Because an affiliation
+# index only means something relative to the list that defines it, both must
+# come from myst.yml rather than pairing myst.yml authors with the front
+# matter's single institution.
+project:
+  authors:
+    - name: Grace Hopper
+      affiliations: society
+  affiliations:
+    - id: engine
+      institution: Analytical Engine Institute
+    - id: society
+      institution: Royal Society

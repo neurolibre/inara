@@ -33,6 +33,53 @@ local function to_inlines (value)
   end
 end
 
+--- Is a metadata value absent, or present but carrying nothing?
+--
+-- A front matter of `title:` with no value is not nil: pandoc's YAML reader
+-- yields a plain Lua string `''` for it (verified against pandoc 3.2.0, both
+-- the `markdown` and `commonmark+yaml_metadata_block` readers). An explicit
+-- `''` becomes empty Inlines, `[]` an empty List, and `{}` an empty table. All
+-- four mean the same thing to an author, so all four must count as absent or
+-- the fallback is defeated by a key that was merely typed out.
+--
+-- Written as statements rather than an `or` chain on purpose; see `part` below.
+local function is_blank (value)
+  if value == nil then
+    return true
+  end
+  local t = ptype(value)
+  if t == 'List' or t == 'Inlines' or t == 'Blocks' then
+    return #value == 0
+  end
+  if t == 'table' then
+    return next(value) == nil
+  end
+  if t == 'string' then
+    return value:match '^%s*$' ~= nil
+  end
+  local ok, text = pcall(stringify, value)
+  if not ok then
+    return false
+  end
+  return text:match '^%s*$' ~= nil
+end
+
+--- Normalise a myst.yml sequence to a List.
+--
+-- `affiliations: harvard` is legal MyST. Pandoc yields Inlines for it, and
+-- iterating those with ipairs walks the individual Inline elements -- so
+-- `affiliations: Harvard University` would become three affiliations. Treat any
+-- non-List value as a one-element sequence instead.
+local function as_list (value)
+  if value == nil then
+    return pandoc.List{}
+  elseif ptype(value) == 'List' then
+    return value
+  else
+    return pandoc.List{value}
+  end
+end
+
 --- Read the `project` table out of ./myst.yml, or nil.
 --
 -- NeuroLibre guarantees myst.yml at the repository root beside paper.md, and
@@ -107,14 +154,24 @@ local function affiliation_name (aff)
 end
 
 --- Build the indexed affiliation list and an id -> index map.
+--
+-- MyST's validator accepts a bare string where an affiliation mapping is
+-- expected, so an entry may be a plain value rather than a table. Such an entry
+-- becomes an affiliation whose name is its string form, with no id, and it
+-- still consumes its index position -- the Python side applies the same rule,
+-- so the two agree on every author's index.
 local function build_affiliations (project)
   local affiliations = pandoc.List{}
   local index_of = {}
-  for i, aff in ipairs(project.affiliations or {}) do
+  for i, aff in ipairs(as_list(project.affiliations)) do
     local index = tostring(i)
-    affiliations:insert{index = index, name = affiliation_name(aff)}
-    if aff.id ~= nil then
-      index_of[stringify(aff.id)] = index
+    if ptype(aff) == 'table' then
+      affiliations:insert{index = index, name = affiliation_name(aff)}
+      if aff.id ~= nil then
+        index_of[stringify(aff.id)] = index
+      end
+    else
+      affiliations:insert{index = index, name = to_inlines(stringify(aff))}
     end
   end
   return affiliations, index_of
@@ -145,36 +202,45 @@ end
 -- Appends to `affiliations` and `index_of` for any token that matches no
 -- declared id: MyST permits ad-hoc affiliations, and dropping the author's
 -- affiliation would be worse than inventing an entry for it.
+--
+-- As with affiliations, MyST accepts a bare string in place of an author
+-- mapping (`authors: [Ada Lovelace, Grace Hopper]`). Such an entry becomes an
+-- author whose name is its string form with no affiliations, keeping its
+-- position in the list. The Python side applies the same rule.
 local function build_authors (project, affiliations, index_of)
   local authors = pandoc.List{}
-  for _, source in ipairs(project.authors or {}) do
-    local author = {name = to_inlines(source.name)}
-    author.email = source.email
-    author.orcid = source.orcid
-    author.corresponding = source.corresponding
-    author['equal-contrib'] = source.equal_contributor
+  for _, source in ipairs(as_list(project.authors)) do
+    if ptype(source) ~= 'table' then
+      authors:insert{name = to_inlines(stringify(source))}
+    else
+      local author = {name = to_inlines(source.name)}
+      author.email = source.email
+      author.orcid = source.orcid
+      author.corresponding = source.corresponding
+      author['equal-contrib'] = source.equal_contributor
 
-    local indices = pandoc.List{}
-    local tokens = affiliation_tokens(source.affiliations or source.affiliation)
-    for _, token in ipairs(tokens) do
-      local index = index_of[token]
-      if not index then
-        index = tostring(#affiliations + 1)
-        affiliations:insert{
-          index = index,
-          name = to_inlines(token),
-        }
-        index_of[token] = index
+      local indices = pandoc.List{}
+      local tokens = affiliation_tokens(source.affiliations or source.affiliation)
+      for _, token in ipairs(tokens) do
+        local index = index_of[token]
+        if not index then
+          index = tostring(#affiliations + 1)
+          affiliations:insert{
+            index = index,
+            name = to_inlines(token),
+          }
+          index_of[token] = index
+        end
+        indices:insert(index)
       end
-      indices:insert(index)
-    end
-    if #indices > 0 then
-      author.affiliation = pandoc.Inlines{
-        pandoc.Str(table.concat(indices, ','))
-      }
-    end
+      if #indices > 0 then
+        author.affiliation = pandoc.Inlines{
+          pandoc.Str(table.concat(indices, ','))
+        }
+      end
 
-    authors:insert(author)
+      authors:insert(author)
+    end
   end
   return authors
 end
@@ -186,8 +252,10 @@ function Meta (meta)
   end
 
   local filled = pandoc.List{}
+  -- A front matter key that is present but empty (`title:`) counts as absent:
+  -- gating on presence alone published a PDF with no title and a blank byline.
   local function fill (key, value)
-    if meta[key] == nil and value ~= nil then
+    if is_blank(meta[key]) and not is_blank(value) then
       meta[key] = value
       filled:insert(key)
     end
@@ -202,7 +270,7 @@ function Meta (meta)
   -- means something relative to the list that defines it, so mixing front
   -- matter authors with myst.yml affiliations would silently attach authors to
   -- the wrong institutions.
-  if meta.authors == nil or meta.affiliations == nil then
+  if is_blank(meta.authors) or is_blank(meta.affiliations) then
     local affiliations, index_of = build_affiliations(project)
     local authors = build_authors(project, affiliations, index_of)
     if #authors > 0 then
