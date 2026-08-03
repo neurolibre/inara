@@ -17,6 +17,12 @@ filters:
     # Parse raw LaTeX
     path: parse-latex.lua
   - type: lua
+    # Fill gaps in the front matter from myst.yml. Must precede
+    # normalize-metadata.lua, which cannot cope with absent authors, and
+    # must precede inline-cited-references.lua, which resolves and then
+    # clears meta.bibliography.
+    path: myst-frontmatter.lua
+  - type: lua
     path: inline-cited-references.lua
   - type: citeproc
   - type: lua

@@ -1,0 +1,7 @@
+TITLE:String Affiliation Entry
+DATE:
+TAGS:
+BIB:
+AUTHORS:[Ada Lovelace|aff=<3>|orcid=|cor=|eq=]
+AFFS:[1|Alpha University][2|Bare String Institute][3|Beta University]
+CORRESP:

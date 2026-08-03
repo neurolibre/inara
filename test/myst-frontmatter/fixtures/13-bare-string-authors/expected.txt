@@ -1,0 +1,7 @@
+TITLE:Bare String Authors
+DATE:
+TAGS:
+BIB:
+AUTHORS:[Ada Lovelace|aff=<>|orcid=|cor=|eq=][Grace Hopper|aff=<>|orcid=|cor=|eq=]
+AFFS:
+CORRESP:

@@ -1,0 +1,7 @@
+project:
+  bibliography: paper.bib
+# expected.txt shows BIB:[paper.bib] because the metadata check runs only
+# myst-frontmatter.lua and normalize-metadata.lua. Under the real chain
+# inline-cited-references.lua consumes and then clears meta.bibliography, so
+# the bibliography key is genuinely empty by the end of a real build --
+# expected-refs.txt, not expected.txt, is what proves the filter order.

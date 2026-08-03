@@ -1,0 +1,7 @@
+TITLE:Ad Hoc Affiliation
+DATE:
+TAGS:
+BIB:
+AUTHORS:[Ada Lovelace|aff=<1>|orcid=|cor=|eq=][Grace Hopper|aff=<2>|orcid=|cor=|eq=]
+AFFS:[1|Analytical Engine Institute][2|Yale University]
+CORRESP:
