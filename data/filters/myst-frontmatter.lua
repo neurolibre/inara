@@ -198,13 +198,19 @@ function Meta (meta)
   fill('tags', project.keywords)
   fill('bibliography', project.bibliography)
 
-  local affiliations, index_of = build_affiliations(project)
-  local authors = build_authors(project, affiliations, index_of)
-  if #authors > 0 then
-    fill('authors', authors)
-  end
-  if #affiliations > 0 then
-    fill('affiliations', affiliations)
+  -- Authors and affiliations are filled as a pair. An affiliation index only
+  -- means something relative to the list that defines it, so mixing front
+  -- matter authors with myst.yml affiliations would silently attach authors to
+  -- the wrong institutions.
+  if meta.authors == nil or meta.affiliations == nil then
+    local affiliations, index_of = build_affiliations(project)
+    local authors = build_authors(project, affiliations, index_of)
+    if #authors > 0 then
+      meta.authors = authors
+      meta.affiliations = affiliations
+      filled:insert('authors')
+      filled:insert('affiliations')
+    end
   end
 
   if #filled > 0 then

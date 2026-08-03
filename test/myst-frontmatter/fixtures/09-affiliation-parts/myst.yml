@@ -1,5 +1,8 @@
 project:
   title: Affiliation Parts
+  authors:
+    - name: Ada Lovelace
+      affiliations: full
   affiliations:
     - id: full
       department: Département de génie physique
