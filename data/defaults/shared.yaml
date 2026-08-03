@@ -20,6 +20,10 @@ filters:
     path: inline-cited-references.lua
   - type: citeproc
   - type: lua
+    # Fill gaps in the front matter from myst.yml. Must precede
+    # normalize-metadata.lua, which cannot cope with absent authors.
+    path: myst-frontmatter.lua
+  - type: lua
     path: normalize-metadata.lua
   - type: lua
     path: time.lua
