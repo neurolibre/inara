@@ -21,6 +21,9 @@ filters:
     # that filter emits.
   - type: lua
     path: myst-references.lua
+  - type: lua
+    # Must follow citeproc, which is what creates the `refs` Div this looks for.
+    path: add-references-heading.lua
 
 variables:
   # styling options
