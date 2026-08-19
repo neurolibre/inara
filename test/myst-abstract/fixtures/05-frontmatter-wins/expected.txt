@@ -1,0 +1,4 @@
+ABSTRACT:
+The declared abstract.
+BODY:
+Body text.

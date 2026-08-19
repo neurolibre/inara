@@ -1,0 +1,10 @@
+ABSTRACT:
+Abstract paragraph.
+
+\subsection{A subsection still inside the abstract}\label{a-subsection-still-inside-the-abstract}
+
+More abstract.
+BODY:
+\section{Introduction}\label{introduction}
+
+Body text.

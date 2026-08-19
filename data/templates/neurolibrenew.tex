@@ -60,6 +60,13 @@ $endif$
 \usepackage{caption}
 \usepackage{orcidlink}
 \usepackage{tcolorbox}
+% Set the abstract apart from the running text, the way a reader expects to find
+% it. The article class centres it in small type, which is indistinguishable
+% from the body once the paper is in two-column-ish narrow measure.
+\renewenvironment{abstract}
+  {\begin{tcolorbox}[colback=gray!5!white,colframe=gray!55!black,
+     title={Abstract},boxrule=0.5pt,left=6pt,right=6pt,top=6pt,bottom=6pt]}
+  {\end{tcolorbox}\vspace{0.5em}}
 \usepackage{amssymb,amsmath}
 \usepackage{ifxetex,ifluatex}
 \usepackage{seqsplit}

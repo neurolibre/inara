@@ -76,6 +76,14 @@ local function collect_raw_labels (text)
         best, kind = at, kind_of_env[counter]
       end
     end
+    -- A figure nested inside an admonition cannot be a float, so it is set as
+    -- `\captionof{figure}` instead. That steps the same counter, and its label
+    -- must be classified the same way.
+    for at, counter in preceding:gmatch '()\\captionof%s*{([%w%*]+)}' do
+      if kind_of_env[counter] and at > best then
+        best, kind = at, kind_of_env[counter]
+      end
+    end
     if kind and label ~= '' then
       kinds[label] = kind
     end
