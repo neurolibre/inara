@@ -1,0 +1,6 @@
+ABSTRACT:
+An abstract with \textbf{bold}. It runs to a second line.
+BODY:
+\section{Introduction}\label{introduction}
+
+Body text.

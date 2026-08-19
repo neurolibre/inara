@@ -1,0 +1,8 @@
+ABSTRACT:
+First paragraph of the abstract.
+
+Second paragraph.
+BODY:
+\section{Introduction}\label{introduction}
+
+Body text.

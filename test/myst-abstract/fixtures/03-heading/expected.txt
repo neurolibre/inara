@@ -1,0 +1,6 @@
+ABSTRACT:
+An abstract given as a section.
+BODY:
+\section{Introduction}\label{introduction}
+
+Body text.

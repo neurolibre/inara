@@ -24,6 +24,11 @@ filters:
   - type: lua
     # Must follow citeproc, which is what creates the `refs` Div this looks for.
     path: add-references-heading.lua
+  - type: lua
+    # Must run last of the block filters: it moves the abstract into metadata,
+    # and nothing that walks blocks can reach it afterwards. An abstract holding
+    # an admonition would otherwise be typeset as its own source.
+    path: myst-abstract.lua
 
 variables:
   # styling options

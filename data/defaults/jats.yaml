@@ -3,6 +3,11 @@ output-file: paper.jats
 extract-media: media
 
 filters:
+  - # Lift the abstract out of the body, so the writer can put it in
+    # <abstract> rather than leaving it in the running text.
+    type: lua
+    path: myst-abstract.lua
+
   - # Handle `\ref`, `\label`, and `\autoref` commands
     type: lua
     path: resolve-references.lua
