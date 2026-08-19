@@ -1,0 +1,7 @@
+TITLE:$title$
+DATE:$date$
+TAGS:$for(tags)$[$tags$]$endfor$
+BIB:$for(bibliography)$[$bibliography$]$endfor$
+AUTHORS:$for(authors)$[$authors.name$|aff=$for(authors.affiliation)$<$authors.affiliation$>$endfor$|orcid=$authors.orcid$|cor=$authors.cor-id$|eq=$authors.equal-contrib$]$endfor$
+AFFS:$for(affiliations)$[$affiliations.index$|$affiliations.name$]$endfor$
+CORRESP:$for(article.author-notes.corresp)$[$article.author-notes.corresp.id$|$article.author-notes.corresp.email$]$endfor$

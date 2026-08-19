@@ -1,0 +1,10 @@
+project:
+  title: Coupled Fill
+  authors:
+    - name: Grace Hopper
+      affiliations: society
+  affiliations:
+    - id: engine
+      institution: Analytical Engine Institute
+    - id: society
+      institution: Royal Society

@@ -1,0 +1,11 @@
+# A bare string is a legal affiliation entry. It must become an affiliation
+# named after the string, with no id, and it must still consume its index
+# position -- so Ada resolves to 3, not 2. The Python side agrees.
+project:
+  authors:
+    - name: Ada Lovelace
+      affiliations: b
+  affiliations:
+    - {id: a, institution: Alpha University}
+    - Bare String Institute
+    - {id: b, institution: Beta University}

@@ -1,0 +1,7 @@
+TITLE:Multiple Affiliations
+DATE:
+TAGS:
+BIB:
+AUTHORS:[Ada Lovelace|aff=<1><2>|orcid=0000-0002-1825-0097|cor=|eq=true][Grace Hopper|aff=<2><1>|orcid=|cor=|eq=true]
+AFFS:[1|Analytical Engine Institute][2|Royal Society]
+CORRESP:

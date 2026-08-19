@@ -1,0 +1,7 @@
+TITLE:Front Matter Title
+DATE:01 January 2020
+TAGS:[front matter tag]
+BIB:[front.bib]
+AUTHORS:[Ada Lovelace|aff=<1>|orcid=|cor=|eq=]
+AFFS:[1|Analytical Engine Institute]
+CORRESP:

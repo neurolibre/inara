@@ -1,0 +1,4 @@
+# mystmd's validateContributor accepts a bare string, so this is valid myst.yml.
+# Each string must become a named author with no affiliations.
+project:
+  authors: [Ada Lovelace, Grace Hopper]

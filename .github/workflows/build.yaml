@@ -11,8 +11,10 @@ on:
       - 'LICENSE'
       - 'README.md'
       - 'example/*'
+      - 'test/**'
   pull_request:
-    # Build, but don't push on pull requests
+    # Build, and publish a staging image so the pull request can be tested
+    # against a real image before it is merged.
 
 jobs:
   # Build images and push them
@@ -23,31 +25,67 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      # `main` keeps publishing `latest`, unchanged — it is what the preprint
+      # workflow pulls. A pull request publishes `staging-pr-<number>` instead,
+      # so a review build can never overwrite the production tag.
+      - name: Determine image tag
+        id: image
+        run: |
+          if [ '${{ github.event_name }}' = 'pull_request' ]; then
+            tag='staging-pr-${{ github.event.pull_request.number }}'
+          else
+            tag=latest
+          fi
+          printf 'tag=%s\n' "$tag" >> "$GITHUB_OUTPUT"
+          printf 'Image tag for this run: %s\n' "$tag"
+
       - name: Build image
         run: |
           docker build \
-                 --tag=${{ github.repository }} \
-                 --tag=ghcr.io/${{ github.repository }} \
+                 --tag=${{ github.repository }}:${{ steps.image.outputs.tag }} \
+                 --tag=ghcr.io/${{ github.repository }}:${{ steps.image.outputs.tag }} \
                  .
 
+      # A pull request opened from a fork has no access to secrets, so it can
+      # only be built, not published.
+      - name: Check whether this run can publish
+        id: publish
+        run: |
+          if [ '${{ github.repository }}' != 'neurolibre/inara' ]; then
+            printf 'ok=false\n' >> "$GITHUB_OUTPUT"
+          elif [ '${{ github.event_name }}' = 'pull_request' ] &&
+               [ '${{ github.event.pull_request.head.repo.full_name }}' != '${{ github.repository }}' ]; then
+            printf 'ok=false\n' >> "$GITHUB_OUTPUT"
+            printf 'Pull request is from a fork; building without publishing.\n'
+          else
+            printf 'ok=true\n' >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Push to Docker Hub
-        if: >-
-          github.event_name == 'push' &&
-          github.repository == 'neurolibre/inara'
+        if: steps.publish.outputs.ok == 'true'
         run: |
           # Log into registry
           echo "${{ secrets.DOCKER_HUB_TOKEN }}" |
             docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} --password-stdin
-          docker push ${{ github.repository }}
+          docker push ${{ github.repository }}:${{ steps.image.outputs.tag }}
 
       - name: Push to GitHub Container Registry
-        if: >-
-          github.event_name == 'push' &&
-          github.repository == 'neurolibre/inara'
+        if: steps.publish.outputs.ok == 'true'
         run: |
           # Log into registry
           echo "${{ secrets.GITHUB_TOKEN }}" | \
           docker login ghcr.io \
               -u ${{ github.actor }} \
               --password-stdin
-          docker push ghcr.io/${{ github.repository }}
+          docker push ghcr.io/${{ github.repository }}:${{ steps.image.outputs.tag }}
+
+      - name: Summarise how to use the image
+        if: steps.publish.outputs.ok == 'true'
+        run: |
+          {
+            printf 'Pushed `%s:%s`\n\n' \
+              '${{ github.repository }}' '${{ steps.image.outputs.tag }}'
+            printf 'Build a paper with it:\n\n'
+            printf '```\ndocker run --rm -v "$PWD:/data" %s:%s -o neurolibre ./paper.md\n```\n' \
+              '${{ github.repository }}' '${{ steps.image.outputs.tag }}'
+          } >> "$GITHUB_STEP_SUMMARY"

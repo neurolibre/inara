@@ -1,0 +1,22 @@
+# This author's name and affiliation index deliberately match the front
+# matter's, so this fixture exercises affiliation name composition only and does
+# NOT discriminate which source supplied the authors -- fixture 04 guards that.
+project:
+  title: Affiliation Parts
+  authors:
+    - name: Ada Lovelace
+      affiliations: full
+  affiliations:
+    - id: full
+      department: Département de génie physique
+      institution: École Polytechnique de Montréal
+      address: 2500 Chemin de Polytechnique
+      city: Montreal
+      region: Quebec
+      postal_code: H3T 1J4
+      country: Canada
+    - id: aliased
+      name: Harvard University
+      state: Massachusetts
+    - id: bare
+      institution: National Institute of Standards and Technology

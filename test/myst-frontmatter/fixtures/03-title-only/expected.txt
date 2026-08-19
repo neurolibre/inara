@@ -1,0 +1,7 @@
+TITLE:Title From Myst
+DATE:03 March 2023
+TAGS:[photon counting][transition edge sensor]
+BIB:[content/paper.bib]
+AUTHORS:[Ada Lovelace|aff=<1>|orcid=|cor=|eq=]
+AFFS:[1|Analytical Engine Institute]
+CORRESP:

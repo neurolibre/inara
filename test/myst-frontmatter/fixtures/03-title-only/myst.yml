@@ -1,0 +1,8 @@
+project:
+  title: Title From Myst
+  date: "03 March 2023"
+  keywords:
+    - photon counting
+    - transition edge sensor
+  bibliography:
+    - content/paper.bib

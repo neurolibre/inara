@@ -1,0 +1,7 @@
+TITLE:Accurate Unsupervised Photon Counting from Transition Edge Sensor Signals
+DATE:
+TAGS:[photon counting]
+BIB:[content/paper.bib]
+AUTHORS:[Nicolas Dalbec-Constant|aff=<1>|orcid=|cor=1|eq=][Guillaume Thekkadath|aff=<2>|orcid=|cor=|eq=][Thomas Gerrits|aff=<3>|orcid=|cor=|eq=]
+AFFS:[1|Département de génie physique, École Polytechnique de Montréal, Montreal, Quebec, H3T 1J4, Canada][2|National Research Council of Canada, 100 Sussex Drive, Ottawa, Ontario, K1N 5A2, Canada][3|National Institute of Standards and Technology, 100 Bureau Drive, Gaithersburg, MD, 20899, USA]
+CORRESP:[1|nicolas.dalbec-constant@polymtl.ca]

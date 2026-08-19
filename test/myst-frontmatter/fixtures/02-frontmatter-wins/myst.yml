@@ -1,0 +1,13 @@
+project:
+  title: Myst Title
+  date: "02 February 2022"
+  keywords:
+    - myst keyword
+  bibliography:
+    - content/myst.bib
+  authors:
+    - name: Grace Hopper
+      affiliations: harvard
+  affiliations:
+    - id: harvard
+      institution: Harvard University

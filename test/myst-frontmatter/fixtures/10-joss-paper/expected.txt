@@ -1,0 +1,7 @@
+TITLE:A JOSS Paper
+DATE:13 August 2017
+TAGS:[Python]
+BIB:[paper.bib]
+AUTHORS:[Ada Lovelace|aff=<1><2>|orcid=0000-0002-1825-0097|cor=|eq=]
+AFFS:[1|Analytical Engine Institute][2|Royal Society]
+CORRESP:

@@ -1,0 +1,10 @@
+# A front matter key that is present but empty must count as absent: pandoc's
+# YAML reader yields an empty string for `title:`, not nil.
+project:
+  title: Empty Keys Filled
+  authors:
+    - name: Grace Hopper
+      affiliations: society
+  affiliations:
+    - id: society
+      institution: Royal Society

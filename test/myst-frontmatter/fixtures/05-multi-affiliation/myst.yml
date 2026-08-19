@@ -1,0 +1,16 @@
+project:
+  title: Multiple Affiliations
+  authors:
+    - name: Ada Lovelace
+      orcid: 0000-0002-1825-0097
+      equal_contributor: true
+      affiliations:
+        - engine
+        - society
+    - name: Grace Hopper
+      affiliations: society; engine
+  affiliations:
+    - id: engine
+      institution: Analytical Engine Institute
+    - id: society
+      institution: Royal Society
