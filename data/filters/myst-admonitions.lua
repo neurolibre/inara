@@ -39,6 +39,11 @@ local admonition_styles = {
     frame = 'red!75!black',
     title = 'Interactive content',
   },
+  table = {
+    color = 'red!5!white',
+    frame = 'red!75!black',
+    title = 'Interactive content placeholder',
+  },
   note = {color = 'blue!5!white', frame = 'blue!75!black', title = 'Note'},
   important = {color = 'blue!5!white', frame = 'blue!75!black', title = 'Important'},
   seealso = {color = 'blue!5!white', frame = 'blue!75!black', title = 'See also'},
@@ -302,6 +307,256 @@ local function iframe (url, label, body)
   return blocks
 end
 
+--- Notebook cell outputs, keyed by the cell's label. Filled on first use.
+local notebook_outputs = nil
+
+--- Folders that never hold a submission's notebooks, only copies or caches.
+local skipped_folders = {
+  _build = true,
+  node_modules = true,
+  __pycache__ = true,
+}
+
+--- Every `.ipynb` under `dir`, a few levels deep.
+local function find_notebooks (dir, depth, found)
+  local ok, entries = pcall(pandoc.system.list_directory, dir)
+  if not ok then
+    return found
+  end
+  for _, name in ipairs(entries) do
+    local path = dir == '.' and name or pandoc.path.join{dir, name}
+    if name:match '%.ipynb$' then
+      found:insert(path)
+    elseif depth > 0 and not name:match '^%.' and not skipped_folders[name] then
+      find_notebooks(path, depth - 1, found)
+    end
+  end
+  return found
+end
+
+--- A notebook field holds either one string or a list of lines.
+local function joined (value)
+  if type(value) == 'table' then
+    return table.concat(value)
+  end
+  return value
+end
+
+--- The label MyST knows a cell by: a `#| label:` line, or `label` in metadata.
+local function cell_label (cell)
+  local source = joined(cell.source) or ''
+  local label = source:match '^#|%s*label:%s*(%S+)'
+    or source:match '\n#|%s*label:%s*(%S+)'
+  if not label and type(cell.metadata) == 'table' then
+    label = cell.metadata.label
+  end
+  return label
+end
+
+--- Size a table's columns by what they hold.
+--
+-- A wide pipe table gets its column widths from the length of its `---`
+-- separators, which pandas pads to the header. A short header over long values
+-- then gets a narrow column, and every value in it wraps. Sizing each column
+-- by its longest value, or the longest word of its header, keeps rows on one
+-- line and lets only the headers wrap.
+local function size_columns (tbl)
+  -- A table narrow enough for the line keeps pandoc's natural column widths.
+  for _, colspec in ipairs(tbl.colspecs) do
+    if type(colspec[2]) ~= 'number' then
+      return tbl
+    end
+  end
+
+  local widths = {}
+  local function measure (rows, whole_cell)
+    for _, row in ipairs(rows) do
+      for i, cell in ipairs(row.cells) do
+        local text = stringify(cell.contents)
+        local width = 0
+        if whole_cell then
+          width = utf8.len(text) or #text
+        else
+          for word in text:gmatch '%S+' do
+            width = math.max(width, utf8.len(word) or #word)
+          end
+        end
+        widths[i] = math.max(widths[i] or 1, width)
+      end
+    end
+  end
+  measure(tbl.head.rows, false)
+  for _, body in ipairs(tbl.bodies) do
+    measure(body.body, true)
+  end
+
+  local total = 0
+  for i = 1, #tbl.colspecs do
+    total = total + (widths[i] or 1)
+  end
+  for i, colspec in ipairs(tbl.colspecs) do
+    tbl.colspecs[i] = {colspec[1], (widths[i] or 1) / total}
+  end
+  return tbl
+end
+
+--- Map each labelled cell to the blocks its saved output reads as.
+--
+-- A MyST embed such as `![](#notebook_tbl)` shows a cell's output, which only
+-- the living preprint can execute. The notebook usually still carries the
+-- output from its last run, and a table is saved in a form pandoc can read --
+-- markdown from `DataFrame.to_markdown`, or the HTML pandas renders -- so the
+-- PDF can show the same table.
+local function load_notebook_outputs ()
+  local outputs = {}
+  for _, path in ipairs(find_notebooks('.', 3, pandoc.List{})) do
+    local fh = io.open(path, 'r')
+    local ok, notebook = false, nil
+    if fh then
+      ok, notebook = pcall(pandoc.json.decode, fh:read 'a', false)
+      fh:close()
+    end
+    if ok and type(notebook) == 'table' and type(notebook.cells) == 'table' then
+      for _, cell in ipairs(notebook.cells) do
+        local label = cell.cell_type == 'code' and cell_label(cell)
+        if label and not outputs[label] then
+          for _, output in ipairs(cell.outputs or {}) do
+            local data = type(output) == 'table' and output.data
+            if type(data) == 'table' then
+              local markdown = joined(data['text/markdown'])
+              local html = joined(data['text/html'])
+              if markdown then
+                outputs[label] = pandoc.read(markdown, 'markdown').blocks
+              elseif html then
+                outputs[label] = pandoc.read(html, 'html').blocks
+              end
+              if outputs[label] then
+                outputs[label] = outputs[label]:walk{Table = size_columns}
+                break
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+  return outputs
+end
+
+--- The cell label of a block that is nothing but an embed, `![](#label)`.
+local function embed_label (block)
+  if block.t == 'Figure' and #block.content == 1 then
+    block = block.content[1]
+  end
+  if (block.t ~= 'Para' and block.t ~= 'Plain') or #block.content ~= 1 then
+    return nil
+  end
+  local image = block.content[1]
+  local label = image.t == 'Image' and image.src:match '^#(.+)$'
+  if not label then
+    return nil
+  end
+  -- The reader appends `default-image-extension` to any image path without
+  -- one, and a cell label never has one, so `#cell` arrives as `#cell.png`.
+  local extension = PANDOC_READER_OPTIONS.default_image_extension or ''
+  if extension ~= '' and label:sub(-#extension) == extension then
+    label = label:sub(1, -#extension - 1)
+  end
+  return label
+end
+
+--- Replace embeds with the outputs they point at, where those were saved.
+local function resolve_embeds (blocks)
+  local result = pandoc.List{}
+  for _, block in ipairs(blocks) do
+    local label = embed_label(block)
+    if label then
+      notebook_outputs = notebook_outputs or load_notebook_outputs()
+      if notebook_outputs[label] then
+        result:extend(notebook_outputs[label]:clone())
+      else
+        io.stderr:write(
+          '[WARNING] myst-admonitions: no saved notebook output for #' .. label .. '\n'
+        )
+      end
+    else
+      result:insert(block)
+    end
+  end
+  return result
+end
+
+--- A table, captioned with the directive's title and any text in its body.
+--
+-- MyST puts the title in the caption and treats the body's paragraphs as a
+-- legend. A LaTeX caption is a single paragraph, so the title leads in bold and
+-- the legend follows it.
+--
+-- When the body holds no table -- the usual reason being an embed whose output
+-- was never saved -- the table is shown as a placeholder pointing at the living
+-- preprint, numbered as a table so references to it still resolve.
+local function table_directive (title, label, body, article_doi)
+  local blocks = resolve_embeds(body)
+  local tbl = nil
+  local legend = pandoc.List{}
+  local rest = pandoc.List{}
+  for _, block in ipairs(blocks) do
+    if block.t == 'Table' and not tbl then
+      tbl = block
+    elseif block.t == 'Para' or block.t == 'Plain' then
+      legend:insert(block)
+    else
+      rest:insert(block)
+    end
+  end
+
+  if not tbl then
+    local style = admonition_styles.table
+    local heading = '\\refstepcounter{table}Table~\\thetable: '
+      .. (title and escape_latex(title) or style.title)
+      .. (label and (' \\label{' .. label .. '}') or '')
+    local result = pandoc.List{
+      open_box(style, heading),
+      pandoc.Para{
+        pandoc.Str 'Please see ',
+        pandoc.Link(
+          pandoc.Inlines{pandoc.Str 'the living preprint'},
+          'https://preprint.neurolibre.org/' .. article_doi
+        ),
+        pandoc.Str ' to view this table.',
+      },
+    }
+    result:extend(with_leading_gap(legend))
+    result:insert(raw(CLOSE_BOX))
+    return result
+  end
+
+  local caption = pandoc.Inlines{}
+  if title then
+    local parsed = pandoc.read(title, 'markdown').blocks
+    caption = parsed[1] and parsed[1].content or pandoc.Inlines{pandoc.Str(title)}
+  end
+  if #legend > 0 and #caption > 0 then
+    if not stringify(caption):match '[%.%?!:]$' then
+      caption:insert(pandoc.Str '.')
+    end
+    caption = pandoc.Inlines{pandoc.Strong(caption)}
+  end
+  for _, para in ipairs(legend) do
+    if #caption > 0 then
+      caption:insert(pandoc.Space())
+    end
+    caption:extend(para.content)
+  end
+
+  tbl.caption.long = #caption > 0 and pandoc.Blocks{pandoc.Plain(caption)} or pandoc.Blocks{}
+  tbl.identifier = label or tbl.identifier
+
+  local result = pandoc.List{tbl}
+  result:extend(rest)
+  return result
+end
+
 local process_blocks
 
 --- Turn one directive into a list of blocks.
@@ -323,6 +578,10 @@ local function render (name, opening, body_blocks, article_doi, nested)
       return figure_with_image(argument, label, body, nested)
     end
     return figure_placeholder(label, body, article_doi)
+  end
+
+  if name == 'table' then
+    return table_directive(argument, label, body, article_doi)
   end
 
   -- `:::{note} A title of its own` names the box; MyST shows that in place of
@@ -534,27 +793,80 @@ end
 
 process_blocks = process_blocks_impl
 
---- Turn MyST's `{button}` role into an ordinary link.
+--- MyST inline roles with a direct counterpart in pandoc, keyed by role name.
 --
--- The role is written ``{button}`Label <https://example.org>` ``. Pandoc has no
--- notion of it, so it reaches the output as the literal text `{button}` beside
--- a code span. A button cannot be pressed on paper, but the destination is
--- still worth reaching, and a link is how print says so.
-local function buttons (inlines)
+-- Each handler takes the role's content and returns an inline, or nil to leave
+-- the role as written.
+local role_handlers = {}
+
+--- `{button}` becomes an ordinary link. A button cannot be pressed on paper,
+--- but the destination is still worth reaching, and a link is how print says so.
+role_handlers.button = function (content)
+  local label, url = content:match '^%s*(.-)%s*<(%S+)>%s*$'
+  if not url then
+    return nil
+  end
+  return pandoc.Link(pandoc.Inlines{pandoc.Str(label ~= '' and label or url)}, url)
+end
+
+role_handlers.sup = function (content)
+  return pandoc.Superscript(pandoc.Inlines(content))
+end
+role_handlers.superscript = role_handlers.sup
+
+role_handlers.sub = function (content)
+  return pandoc.Subscript(pandoc.Inlines(content))
+end
+role_handlers.subscript = role_handlers.sub
+
+role_handlers.u = function (content)
+  return pandoc.Underline(pandoc.Inlines(content))
+end
+role_handlers.underline = role_handlers.u
+
+role_handlers.del = function (content)
+  return pandoc.Strikeout(pandoc.Inlines(content))
+end
+role_handlers.strike = role_handlers.del
+
+role_handlers.smallcaps = function (content)
+  return pandoc.SmallCaps(pandoc.Inlines(content))
+end
+role_handlers.sc = role_handlers.smallcaps
+
+role_handlers.math = function (content)
+  return pandoc.Math('InlineMath', content)
+end
+
+--- `{abbr}` is written ``{abbr}`MD (mean diffusivity)` ``. The web shows the
+--- expansion on hover; print can only show the abbreviation.
+role_handlers.abbr = function (content)
+  local short = content:match '^%s*(.-)%s*%b()%s*$'
+  return pandoc.Str(short and short ~= '' and short or content)
+end
+
+--- Turn MyST inline roles into the pandoc inlines they stand for.
+--
+-- A role is written ``{name}`content` ``. Pandoc has no notion of roles, so it
+-- reads the name as plain text and the content as a code span. The name is
+-- often glued to the word before it, as in ``10{sup}`-7` ``, so it is matched
+-- at the end of a Str rather than as a whole one. Roles without a handler are
+-- left as written.
+local function roles (inlines)
   local result = pandoc.List{}
   local i = 1
   while i <= #inlines do
     local inline = inlines[i]
     local next_inline = inlines[i + 1]
-    if inline.t == 'Str' and inline.text == '{button}'
-      and next_inline and next_inline.t == 'Code'
-    then
-      local label, url = next_inline.text:match '^%s*(.-)%s*<(%S+)>%s*$'
-      if url then
-        result:insert(pandoc.Link(
-          pandoc.Inlines{pandoc.Str(label ~= '' and label or url)},
-          url
-        ))
+    if inline.t == 'Str' and next_inline and next_inline.t == 'Code' then
+      local before, name = inline.text:match '^(.-){([%w%-:]+)}$'
+      local handler = name and role_handlers[name]
+      local replacement = handler and handler(next_inline.text)
+      if replacement then
+        if before ~= '' then
+          result:insert(pandoc.Str(before))
+        end
+        result:insert(replacement)
         i = i + 2
         goto continue
       end
@@ -573,7 +885,7 @@ function Pandoc (doc)
   end
   -- Before the fences: an admonition body is rendered to raw LaTeX as its box
   -- is built, and nothing can rewrite its inlines afterwards.
-  doc = doc:walk{Inlines = buttons}
+  doc = doc:walk{Inlines = roles}
   doc.blocks = process_blocks(doc.blocks, article_doi, false)
   return doc
 end
