@@ -260,6 +260,13 @@ $endif$
 }{}
 
 %% Font settings
+% Characters missing from the main fonts, such as the subscript letters in
+% "ω²ₚ", are taken from Open Sans (installed in the image) rather than dropped.
+% Set before fontsetup so that every font it loads carries the fallback.
+\ifluatex
+\directlua{luaotfload.add_fallback("neurolibrefallback", {"[/usr/share/fonts/opensans/OpenSans-Regular.ttf]:mode=node;"})}
+\defaultfontfeatures+{RawFeature={fallback=neurolibrefallback}}
+\fi
 \usepackage{fontsetup} % Lazy way to get proper Greek lowercase glyphs
 
 % Use Hack https://sourcefoundry.org/hack/
