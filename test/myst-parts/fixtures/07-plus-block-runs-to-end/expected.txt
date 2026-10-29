@@ -1,8 +1,7 @@
 ABSTRACT:
-
-BODY:
-+++ \{ ``part'': ``abstract'' \} Never closed.
+Never closed.
 
 \section{Introduction}\label{introduction}
 
 Body text.
+BODY:

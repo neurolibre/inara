@@ -1,6 +1,0 @@
-ABSTRACT:
-
-BODY:
-+++ \{ ``part'': ``acknowledgements'' \} Thanks to everyone. +++
-
-Body text.

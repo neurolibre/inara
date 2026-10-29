@@ -1,0 +1,26 @@
+ABSTRACT:
+
+BODY:
+\section{Summary}\label{summary}
+
+A short summary.
+
+\section{Introduction}\label{introduction}
+
+Body text.
+
+\section{Acknowledgments}\label{acknowledgments}
+
+We thank \emph{everyone}.
+
+\section{Funding}\label{funding}
+
+Funded by a grant.
+
+\section{References}\label{references}
+
+\phantomsection\label{refs}
+\begin{CSLReferences}{0}{1}
+Entry.
+
+\end{CSLReferences}

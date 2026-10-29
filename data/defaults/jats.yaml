@@ -4,9 +4,10 @@ extract-media: media
 
 filters:
   - # Lift the abstract out of the body, so the writer can put it in
-    # <abstract> rather than leaving it in the running text.
+    # <abstract> rather than leaving it in the running text, and typeset the
+    # other MyST parts as sections.
     type: lua
-    path: myst-abstract.lua
+    path: myst-parts.lua
 
   - # Handle `\ref`, `\label`, and `\autoref` commands
     type: lua

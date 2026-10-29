@@ -1,0 +1,16 @@
+ABSTRACT:
+
+BODY:
+\section{Results}\label{results}
+
+Body text.
+
+\subsection{Detail}\label{detail}
+
+More.
+
+\section{Data availability}\label{data-availability}
+
+Data are on Zenodo.
+
+Code is on GitHub.

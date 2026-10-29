@@ -1,0 +1,8 @@
+ABSTRACT:
+
+BODY:
+Body text.
+
+\section{Data availability}\label{data-availability}
+
+Declared in the front matter.
