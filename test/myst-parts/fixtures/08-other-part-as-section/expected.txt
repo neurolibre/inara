@@ -1,0 +1,8 @@
+ABSTRACT:
+
+BODY:
+\section{Acknowledgements}\label{acknowledgements}
+
+Thanks to everyone.
+
+Body text.

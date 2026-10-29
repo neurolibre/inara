@@ -1,6 +1,6 @@
 #!/bin/sh
-# Run myst-abstract.lua over each fixture and compare the abstract it lifted
-# into metadata, and the body it left behind, against the fixture's expected.txt.
+# Run myst-parts.lua over each fixture and compare the abstract it lifted into
+# metadata, and the body it produced, against the fixture's expected.txt.
 set -eu
 
 here=$(cd "$(dirname "$0")" && pwd)
@@ -17,7 +17,7 @@ for fixture in "$here"/fixtures/*/; do
         "$image" \
         --data-dir=/inara \
         --wrap=none \
-        --lua-filter=/inara/filters/myst-abstract.lua \
+        --lua-filter=/inara/filters/myst-parts.lua \
         --template=/dump.template \
         --to=latex \
         paper.md 2>/dev/null) || {

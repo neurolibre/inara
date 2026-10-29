@@ -27,8 +27,10 @@ filters:
   - type: lua
     # Must run last of the block filters: it moves the abstract into metadata,
     # and nothing that walks blocks can reach it afterwards. An abstract holding
-    # an admonition would otherwise be typeset as its own source.
-    path: myst-abstract.lua
+    # an admonition would otherwise be typeset as its own source. Must follow
+    # add-references-heading.lua, since parts from the front matter go before
+    # the bibliography and its heading.
+    path: myst-parts.lua
 
 variables:
   # styling options

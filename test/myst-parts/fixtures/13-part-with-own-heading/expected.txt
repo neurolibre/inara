@@ -1,0 +1,10 @@
+ABSTRACT:
+
+BODY:
+\section{Methods}\label{methods}
+
+Body text.
+
+\section{Data and code availability}
+
+Everything is open.
