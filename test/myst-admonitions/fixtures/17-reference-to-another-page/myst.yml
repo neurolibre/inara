@@ -1,0 +1,5 @@
+version: 1
+project:
+  toc:
+    - file: paper.md
+    - file: supplementary.md

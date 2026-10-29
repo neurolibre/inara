@@ -5,6 +5,9 @@
 # myst-references.lua runs too, so these tests also cover that a label defined
 # by an admonition can be referenced from elsewhere in the document -- the two
 # filters are ordered against each other precisely for that.
+#
+# The default image extension matches data/defaults/shared.yaml, since it
+# changes what an embed like `![](#cell)` looks like by the time a filter sees it.
 set -eu
 
 here=$(cd "$(dirname "$0")" && pwd)
@@ -20,6 +23,7 @@ for fixture in "$here"/fixtures/*/; do
         "$image" \
         --data-dir=/inara \
         --wrap=none \
+        --default-image-extension=.png \
         --lua-filter=/inara/filters/myst-admonitions.lua \
         --lua-filter=/inara/filters/myst-references.lua \
         --to=latex \
