@@ -1,0 +1,8 @@
+<boxed-text>
+  <p><bold>Interactive dashboard</bold></p>
+  <boxed-text>
+    <p><bold>Interactive content</bold></p>
+    <p>This content is interactive in the living preprint. Open it at <ext-link ext-link-type="uri" xlink:href="https://example.org/dashboard">https://example.org/dashboard</ext-link>.</p>
+  </boxed-text>
+  <p><ext-link ext-link-type="uri" xlink:href="https://example.org/dashboard">Open in new tab</ext-link></p>
+</boxed-text>

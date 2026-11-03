@@ -1,0 +1,26 @@
+<p>See <xref rid="tblGroups" />.</p>
+<table-wrap>
+  <caption>
+    <p><bold>Group sizes.</bold> Counts per group, with <inline-formula><alternatives>
+    <tex-math><![CDATA[n]]></tex-math>
+    <mml:math display="inline" xmlns:mml="http://www.w3.org/1998/Math/MathML"><mml:mi>n</mml:mi></mml:math></alternatives></inline-formula> the number of participants.</p>
+  </caption>
+  <table id="tblGroups">
+    <thead>
+      <tr>
+        <th align="left">Group</th>
+        <th align="right">n</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td align="left">Control</td>
+        <td align="right">13</td>
+      </tr>
+      <tr>
+        <td align="left">Patient</td>
+        <td align="right">14</td>
+      </tr>
+    </tbody>
+  </table>
+</table-wrap>
