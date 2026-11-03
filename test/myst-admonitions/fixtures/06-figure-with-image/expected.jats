@@ -1,0 +1,4 @@
+<fig id="figOne">
+  <caption><p>A caption with <bold>bold</bold>.</p></caption>
+  <graphic mimetype="image" mime-subtype="png" xlink:href="./img.png" />
+</fig>

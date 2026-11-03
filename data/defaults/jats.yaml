@@ -3,6 +3,16 @@ output-file: paper.jats
 extract-media: media
 
 filters:
+  - # Turn MyST directives (admonitions, figures, tables, iframes) into
+    # <boxed-text>, <fig> and <table-wrap>, and replace notebook embeds such as
+    # `![](#cell)` with the cell's saved output. Without it the directives reach
+    # the JATS file as literal text, and pandoc cannot fetch an embed's `#cell`
+    # source when extracting media, which it reports as "replacing image with
+    # description". Must precede myst-parts.lua, which moves the abstract into
+    # metadata, out of reach of a block filter.
+    type: lua
+    path: myst-admonitions.lua
+
   - # Lift the abstract out of the body, so the writer can put it in
     # <abstract> rather than leaving it in the running text, and typeset the
     # other MyST parts as sections.

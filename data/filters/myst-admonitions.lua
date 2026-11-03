@@ -1,4 +1,10 @@
---- Render MyST admonition and figure directives as LaTeX boxes.
+--- Render MyST admonition, figure and table directives.
+--
+-- For LaTeX (the PDF) they become boxes, floats and tables written as raw
+-- LaTeX. For every other format -- in practice JATS -- they become plain pandoc
+-- elements: a Div for a box, a Figure, a Table, each carrying the directive's
+-- label as its identifier, so the writer can build its own markup and cross
+-- references can find them.
 --
 -- MyST writes these as colon fences:
 --
@@ -10,7 +16,7 @@
 -- Pandoc does not parse them. A fence whose opening line carries a title after
 -- the `{type}` is not a valid `fenced_divs` opener, so the whole construct
 -- arrives here as ordinary paragraphs of literal text, fences included. This
--- filter recognises those paragraphs and replaces them with LaTeX.
+-- filter recognises those paragraphs and replaces them.
 --
 -- Two rules matter and both were once broken:
 --
@@ -189,6 +195,28 @@ local function raw (text)
   return pandoc.RawBlock('latex', text)
 end
 
+--- Whether the output is LaTeX. Raw LaTeX is dropped by every other writer, so
+--- each directive has a second form built only from pandoc elements.
+local LATEX = FORMAT:match 'latex' ~= nil
+
+--- A directive's title, read as markdown so emphasis or math in it survives.
+local function title_inlines (text)
+  local parsed = pandoc.read(text, 'markdown').blocks
+  if parsed[1] and parsed[1].content then
+    return parsed[1].content
+  end
+  return pandoc.Inlines{pandoc.Str(text)}
+end
+
+--- A box for formats other than LaTeX: a Div with a bold title paragraph.
+---
+--- JATS writes a Div as `<boxed-text>`, with the label as its `id`.
+local function plain_box (title, label, blocks, class)
+  local content = pandoc.Blocks{pandoc.Para{pandoc.Strong(title)}}
+  content:extend(blocks)
+  return pandoc.Div(content, {id = label or '', class = class})
+end
+
 --- Open a tcolorbox.
 --
 -- The title is braced: it may hold a comma or a bracket, either of which would
@@ -236,6 +264,16 @@ local function figure_with_image (image_path, label, caption_blocks, nested)
       caption_inlines:extend(block.content)
     end
   end
+  if not LATEX then
+    local caption = #caption_inlines > 0
+      and pandoc.Blocks{pandoc.Plain(caption_inlines)} or pandoc.Blocks{}
+    return pandoc.List{pandoc.Figure(
+      pandoc.Blocks{pandoc.Plain{pandoc.Image(pandoc.Inlines{}, image_path)}},
+      {long = caption},
+      {id = label or ''}
+    )}
+  end
+
   local caption = #caption_inlines > 0 and inlines_to_latex(caption_inlines) or nil
   local graphic = '\\includegraphics[width=\\linewidth]{' .. image_path .. '}'
   local labelled = label and ('\\label{' .. label .. '}\n') or ''
@@ -257,6 +295,25 @@ end
 
 --- A figure that only exists in the living preprint.
 local function figure_placeholder (label, body, article_doi)
+  local lead = pandoc.Para{
+    pandoc.Str 'Please see ',
+    pandoc.Link(
+      pandoc.Inlines{pandoc.Str 'the living preprint'},
+      'https://preprint.neurolibre.org/' .. article_doi
+    ),
+    pandoc.Str ' to interact with this figure.',
+  }
+
+  -- Outside LaTeX it is still a figure, numbered and referenceable, whose
+  -- content is the pointer to the living preprint and whose caption is the body.
+  if not LATEX then
+    return pandoc.List{pandoc.Figure(
+      pandoc.Blocks{lead},
+      {long = pandoc.Blocks(body)},
+      {id = label or ''}
+    )}
+  end
+
   local style = admonition_styles.figure
   local title = style.title
   if label then
@@ -264,17 +321,7 @@ local function figure_placeholder (label, body, article_doi)
       .. ' \\label{' .. label .. '}'
   end
 
-  local blocks = pandoc.List{
-    open_box(style, title),
-    pandoc.Para{
-      pandoc.Str 'Please see ',
-      pandoc.Link(
-        pandoc.Inlines{pandoc.Str 'the living preprint'},
-        'https://preprint.neurolibre.org/' .. article_doi
-      ),
-      pandoc.Str ' to interact with this figure.',
-    },
-  }
+  local blocks = pandoc.List{open_box(style, title), lead}
   blocks:extend(with_leading_gap(body))
   blocks:insert(raw(CLOSE_BOX))
   return blocks
@@ -283,11 +330,6 @@ end
 --- An embedded page. Print cannot show it, so link out to it instead.
 local function iframe (url, label, body)
   local style = admonition_styles.iframe
-  local title = style.title
-  if label then
-    title = title .. ' \\label{' .. label .. '}'
-  end
-
   local lead
   if url then
     lead = pandoc.Para{
@@ -299,6 +341,17 @@ local function iframe (url, label, body)
     lead = pandoc.Para{
       pandoc.Str 'This content is interactive in the living preprint.',
     }
+  end
+
+  local content = pandoc.List{lead}
+  content:extend(body)
+  if not LATEX then
+    return pandoc.List{plain_box(title_inlines(style.title), label, content, 'iframe')}
+  end
+
+  local title = style.title
+  if label then
+    title = title .. ' \\label{' .. label .. '}'
   end
 
   local blocks = pandoc.List{open_box(style, title), lead}
@@ -511,21 +564,26 @@ local function table_directive (title, label, body, article_doi)
   end
 
   if not tbl then
+    local lead = pandoc.Para{
+      pandoc.Str 'Please see ',
+      pandoc.Link(
+        pandoc.Inlines{pandoc.Str 'the living preprint'},
+        'https://preprint.neurolibre.org/' .. article_doi
+      ),
+      pandoc.Str ' to view this table.',
+    }
     local style = admonition_styles.table
+    if not LATEX then
+      local content = pandoc.List{lead}
+      content:extend(legend)
+      return pandoc.List{plain_box(
+        title_inlines(title or style.title), label, content, 'table'
+      )}
+    end
     local heading = '\\refstepcounter{table}Table~\\thetable: '
       .. (title and escape_latex(title) or style.title)
       .. (label and (' \\label{' .. label .. '}') or '')
-    local result = pandoc.List{
-      open_box(style, heading),
-      pandoc.Para{
-        pandoc.Str 'Please see ',
-        pandoc.Link(
-          pandoc.Inlines{pandoc.Str 'the living preprint'},
-          'https://preprint.neurolibre.org/' .. article_doi
-        ),
-        pandoc.Str ' to view this table.',
-      },
-    }
+    local result = pandoc.List{open_box(style, heading), lead}
     result:extend(with_leading_gap(legend))
     result:insert(raw(CLOSE_BOX))
     return result
@@ -587,6 +645,11 @@ local function render (name, opening, body_blocks, article_doi, nested)
   -- `:::{note} A title of its own` names the box; MyST shows that in place of
   -- the type's default title, and the frame colour still conveys the type.
   local style = admonition_styles[name] or default_style(name)
+  if not LATEX then
+    return pandoc.List{plain_box(
+      title_inlines(argument or style.title), label, body, name
+    )}
+  end
   local title = argument and escape_latex(argument) or style.title
   if label then
     title = title .. ' \\label{' .. label .. '}'

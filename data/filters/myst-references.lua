@@ -48,6 +48,7 @@ local kind_of_env = {
 }
 
 local kinds = {}         -- identifier -> 'figure' | 'table' | 'section' | 'equation'
+local citation_targets = {} -- `ref-<key>` for every cited key; see resolve_link
 local section_text = {}  -- identifier -> inlines of the heading, for bare section refs
 
 --- Classify every `\label{}` in a chunk of raw LaTeX.
@@ -404,7 +405,7 @@ end
 
 local function resolve_link (link)
   local label = link.target:match '^#(.+)$'
-  if not label then
+  if not label or citation_targets[label] then
     return nil
   end
   local external = nil
@@ -429,6 +430,14 @@ return {
   {
     Pandoc = function (doc)
       collect(doc.blocks)
+      -- With link-citations, citeproc links each citation to its bibliography
+      -- entry at `#ref-<key>`. Those are citations, not cross references, and
+      -- already carry their text, so they are left alone.
+      doc:walk{Cite = function (cite)
+        for _, citation in ipairs(cite.citations) do
+          citation_targets['ref-' .. citation.id] = true
+        end
+      end}
       return doc:walk{Link = resolve_link}
     end
   }

@@ -1,0 +1,6 @@
+<p>See <xref rid="tblMissing" />.</p>
+<boxed-text id="tblMissing">
+  <p><bold>Results</bold></p>
+  <p>Please see <ext-link ext-link-type="uri" xlink:href="https://preprint.neurolibre.org/">the living preprint</ext-link> to view this table.</p>
+  <p>Legend text.</p>
+</boxed-text>
