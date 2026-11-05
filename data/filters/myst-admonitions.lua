@@ -166,13 +166,47 @@ local function parse_argument (opening)
   if not rest or rest == '' then
     return nil
   end
-  local argument = rest:match '^([^:]*)'
-  -- A URL argument contains a colon, so stopping at the first one would cut
-  -- `https://…` down to `https`. Options always start at a colon that begins a
-  -- word, which lets the two cases be told apart.
-  local url = rest:match '^(%a[%w+.-]*://%S+)'
-  argument = trim(url or argument or '')
+  -- The argument runs up to the first option. An option is a `:key:` at the
+  -- start of a word, which is what tells it apart from a colon that belongs
+  -- to the argument itself, be it the one in `https://…` or the one in a
+  -- title such as `To activate Figure 4 interactivity: click …`.
+  local argument = rest:match '^(.-)%f[%S]:[%w%-_]+:' or rest
+  argument = trim(argument)
   return argument ~= '' and argument or nil
+end
+
+--- The argument of a directive's opening line, with its markup intact.
+--
+-- `parse_argument` works on the flattened text of the line, which is all a
+-- path or URL needs. An admonition title is prose, and pandoc has already
+-- parsed its emphasis, code and spans into `line`; this keeps them.
+local function argument_inlines (line)
+  local inlines = pandoc.Inlines{}
+  local prefix = ''
+  local in_prefix = true
+  for _, inline in ipairs(line) do
+    if in_prefix then
+      prefix = prefix .. pandoc.utils.stringify(inline)
+      local after = prefix:match '^:::+%s*{%s*[%w%-_]+%s*}(.*)$'
+      if after then
+        in_prefix = false
+        if after:match '%S' then
+          inlines:insert(pandoc.Str(after))
+        end
+      end
+    elseif inline.t == 'Str' and inline.text:match '^:[%w%-_]+:' then
+      break
+    else
+      inlines:insert(inline)
+    end
+  end
+  while #inlines > 0 and (inlines[1].t == 'Space' or inlines[1].t == 'SoftBreak') do
+    inlines:remove(1)
+  end
+  while #inlines > 0 and (inlines[#inlines].t == 'Space' or inlines[#inlines].t == 'SoftBreak') do
+    inlines:remove(#inlines)
+  end
+  return #inlines > 0 and inlines or nil
 end
 
 --- Is this argument a path to an image rather than a cell reference or URL?
@@ -622,7 +656,7 @@ local process_blocks
 -- The body is spliced in as blocks rather than written out as LaTeX, so that
 -- the filters after this one -- myst-references.lua above all -- can still see
 -- and rewrite what is inside a box.
-local function render (name, opening, body_blocks, article_doi, nested)
+local function render (name, opening, body_blocks, article_doi, nested, title)
   local label = safe_label(select(1, parse_options(opening)))
   local argument = parse_argument(opening)
   local body = process_blocks(body_blocks, article_doi, true)
@@ -645,17 +679,16 @@ local function render (name, opening, body_blocks, article_doi, nested)
   -- `:::{note} A title of its own` names the box; MyST shows that in place of
   -- the type's default title, and the frame colour still conveys the type.
   local style = admonition_styles[name] or default_style(name)
+  title = title or (argument and title_inlines(argument)) or title_inlines(style.title)
   if not LATEX then
-    return pandoc.List{plain_box(
-      title_inlines(argument or style.title), label, body, name
-    )}
+    return pandoc.List{plain_box(title, label, body, name)}
   end
-  local title = argument and escape_latex(argument) or style.title
+  local latex_title = inlines_to_latex(title)
   if label then
-    title = title .. ' \\label{' .. label .. '}'
+    latex_title = latex_title .. ' \\label{' .. label .. '}'
   end
 
-  local blocks = pandoc.List{open_box(style, title)}
+  local blocks = pandoc.List{open_box(style, latex_title)}
   blocks:extend(body)
   blocks:insert(raw(CLOSE_BOX))
   return blocks
@@ -770,7 +803,7 @@ local function take_paragraph_directive (blocks, i, lines, colons, name, article
     return nil, i
   end
 
-  return render(name, opening, body, article_doi, nested), last
+  return render(name, opening, body, article_doi, nested, argument_inlines(lines[1])), last
 end
 
 --- A `:::{type}` fence with no argument is valid `fenced_divs`, and pandoc has

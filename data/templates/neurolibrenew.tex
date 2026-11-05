@@ -262,9 +262,15 @@ $endif$
 %% Font settings
 % Characters missing from the main fonts, such as the subscript letters in
 % "ω²ₚ", are taken from Open Sans (installed in the image) rather than dropped.
+% Symbols that Open Sans lacks too, such as the power symbol "⏻" (U+23FB)
+% that authors use to describe a Binder button, come from NewCM Sans Math,
+% which TeX Live ships and whose Miscellaneous Technical block is complete.
 % Set before fontsetup so that every font it loads carries the fallback.
 \ifluatex
-\directlua{luaotfload.add_fallback("neurolibrefallback", {"[/usr/share/fonts/opensans/OpenSans-Regular.ttf]:mode=node;"})}
+\directlua{luaotfload.add_fallback("neurolibrefallback", {
+  "[/usr/share/fonts/opensans/OpenSans-Regular.ttf]:mode=node;",
+  "[/opt/texlive/texdir/texmf-dist/fonts/opentype/public/newcomputermodern/NewCMSansMath-Regular.otf]:mode=node;",
+})}
 \defaultfontfeatures+{RawFeature={fallback=neurolibrefallback}}
 \fi
 \usepackage{fontsetup} % Lazy way to get proper Greek lowercase glyphs
